@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: dash-db
+    environment:
+      POSTGRES_DB: dash_db
+      POSTGRES_USER: dash_user
+      POSTGRES_PASSWORD: dash_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - dash-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dash_user -d dash_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  be:
+    build:
+      context: ./BE
+    container_name: dash-be
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  fe:
+    build:
+      context: ./FE
+    container_name: dash-fe
+    network_mode: host
+    volumes:
+      - ./FE:/app
+      - /app/node_modules
+    environment:
+      - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
+
+volumes:
+  dash-postgres-data:
