@@ -1,0 +1,40 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dash_db
+    username: dash_user
+    password: dash_pass
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: 8080
+
+jwt:
+  secret: bG9jYWwtc2VjcmV0LWtleS1mb3ItZGFzaC1kZXZlbG9wbWVudC0zMg==
+  expiration: 86400000
+  refresh-expiration: 604800000
+
+logging:
+  level:
+    com.dash: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  base-url: http://localhost:8080

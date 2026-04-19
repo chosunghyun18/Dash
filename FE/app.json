@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Dash",
+    "slug": "dash",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FF4B6E"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.dash.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FF4B6E"
+      },
+      "package": "com.dash.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "scheme": "dash",
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

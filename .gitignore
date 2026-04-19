@@ -1,0 +1,22 @@
+# BE
+BE/.gradle/
+BE/build/
+BE/*.jar
+BE/HELP.md
+BE/.env
+
+# FE
+FE/node_modules/
+FE/.expo/
+FE/dist/
+FE/.env
+FE/.env.local
+
+# OS
+.DS_Store
+*.swp
+
+# IDE
+.idea/
+*.iml
+.vscode/settings.json

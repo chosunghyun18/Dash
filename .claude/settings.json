@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(./gradlew:*)",
+      "Bash(gradle:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(expo:*)"
+    ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/jo/Desktop/MobilewWork/dash/.claude/hooks/feature-workflow.py",
+            "timeout": 5,
+            "statusMessage": "워크플로우 체크 중..."
+          }
+        ]
+      }
+    ]
+  }
+}
