@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dash · 소개팅 앱 디자인</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"/>
+<style>
+  html, body { margin: 0; padding: 0; background: #f0eee9; font-family: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; -webkit-font-smoothing: antialiased; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; }
+  input, textarea { font-family: inherit; }
+  ::selection { background: rgba(255,75,110,0.2); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="lib/dash-primitives.jsx"></script>
+<script type="text/babel" src="lib/dash-frame.jsx"></script>
+<script type="text/babel" src="lib/dash-screens.jsx"></script>
+<script type="text/babel" src="lib/dash-login.jsx"></script>
+
+<script type="text/babel">
+const PHONE_W = 390;
+const PHONE_H = 780;
+
+// Wrap a Dash screen inside a phone frame (status bar + screen + optional tab bar)
+function PhoneScreen({ os, children, tab, onTabChange, hasTab = true, statusDark = false }) {
+  return (
+    <PhoneFrame os={os} width={PHONE_W} height={PHONE_H}>
+      <PhoneStatusBar os={os} dark={statusDark} />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, position: 'relative' }}>
+        {children}
+      </div>
+      {hasTab && <TabBar active={tab} onChange={onTabChange} os={os} />}
+      <div style={{ height: os === 'ios' ? 24 : 14, background: '#fff', flexShrink: 0 }} />
+    </PhoneFrame>
+  );
+}
+
+// ──────────────────────────────────────────────
+// Interactive prototype that lives in one artboard
+// ──────────────────────────────────────────────
+function DashPrototype({ os, initial = 'home' }) {
+  const [screen, setScreen] = React.useState(initial);
+  const [tab, setTab] = React.useState(initial === 'mypage' ? 'mypage' : 'home');
+  const [selected, setSelected] = React.useState(null);
+  const [detailMode, setDetailMode] = React.useState('normal');
+  const [connTrail, setConnTrail] = React.useState([]); // [{id, name}, ...]
+
+  const goHome = () => { setScreen('home'); setTab('home'); };
+  const goMy   = () => { setScreen('mypage'); setTab('mypage'); };
+
+  React.useEffect(() => {
+    if (tab === 'home' && (screen === 'mypage')) setScreen('home');
+    if (tab === 'mypage' && (screen === 'home')) setScreen('mypage');
+  }, [tab]);
+
+  const openConnections = (f) => { setConnTrail([f]); setSelected({ friend: f }); setScreen('connections'); };
+  const drillConnection = (c) => { setConnTrail((tr) => [...tr, c]); };
+  const popConnection = () => {
+    setConnTrail((tr) => {
+      if (tr.length <= 1) { goHome(); return []; }
+      return tr.slice(0, -1);
+    });
+  };
+
+  const openProfile = (p, mode = 'normal', friend, hop) => {
+    setSelected({ person: p, friend, hop });
+    setDetailMode(mode);
+    setScreen('detail');
+  };
+  const openIntro = (c, f, hop) => openProfile(c, 'normal', f, hop);
+  const openRequestFromMyPage = (item, kind) => {
+    if (kind === 'received' && item.status === 'PENDING') openProfile(item, 'accept');
+    else if (item.status === 'ACCEPTED') openProfile({ ...item, contact: item.contact }, 'accepted');
+    else openProfile(item, item.status === 'PENDING' ? 'requested' : 'normal');
+  };
+  const openUpgrade = () => setScreen('plus');
+
+  const body = (() => {
+    if (screen === 'home') {
+      return <ScreenHome os={os}
+        onOpenConnections={openConnections}
+        onOpenProfile={(f) => openProfile({ name: f.name, bio: `${f.name}입니다. ${f.note}로 만났어요.`, via: null }, 'normal')}/>;
+    }
+    if (screen === 'mypage') {
+      return <ScreenMyPage os={os}
+        onEdit={() => setScreen('edit')}
+        onOpenRequest={openRequestFromMyPage}
+        onUpgrade={openUpgrade} />;
+    }
+    if (screen === 'connections') {
+      return <ScreenConnections os={os}
+        trail={connTrail}
+        onBack={popConnection}
+        onOpenIntro={openIntro}
+        onDrillDown={drillConnection}
+        onUpgrade={openUpgrade} />;
+    }
+    if (screen === 'detail') {
+      return <ScreenProfileDetail os={os} person={selected?.person} mode={detailMode} hop={selected?.hop}
+        onBack={() => { setScreen(tab === 'mypage' ? 'mypage' : (selected?.friend ? 'connections' : 'home')); }}
+        onRequest={() => setDetailMode('requested')}
+        onAccept={() => setDetailMode('accepted')}
+        onReject={() => { setScreen('mypage'); setTab('mypage'); }}
+        onUpgrade={openUpgrade} />;
+    }
+    if (screen === 'edit') {
+      return <ScreenProfileEdit os={os} onBack={() => setScreen('mypage')} onSave={() => setScreen('mypage')} />;
+    }
+    if (screen === 'plus') {
+      return <ScreenDashPlus os={os}
+        onBack={() => setScreen('mypage')}
+        onSubscribe={() => { setDashTokens({ isPlus: true }); setScreen('mypage'); setTab('mypage'); }} />;
+    }
+    return null;
+  })();
+
+  const showTab = screen === 'home' || screen === 'mypage';
+
+  return (
+    <PhoneScreen os={os} tab={tab} onTabChange={setTab} hasTab={showTab}>
+      {body}
+    </PhoneScreen>
+  );
+}
+
+// ──────────────────────────────────────────────
+// Static-state artboards (for canvas overview)
+// ──────────────────────────────────────────────
+function StaticScreen({ os, children, hasTab = false, tab }) {
+  return <PhoneScreen os={os} tab={tab} hasTab={hasTab}>{children}</PhoneScreen>;
+}
+
+// One-off artboard: MyPage in Plus-active state. Since DashTokens is a
+// shared mutable object, we can't "scope" isPlus live — instead we render
+// a static mockup that hard-codes the Plus visuals for the overview.
+function PlusActiveDemo() {
+  const t = DashTokens;
+  return (
+    <StaticScreen os="ios" hasTab tab="mypage">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, background: t.bgSoft }}>
+        <div style={{ padding: '20px 20px 16px', flexShrink: 0, background: '#fff' }}>
+          <div style={{ fontSize: 20, fontWeight: 800, color: t.text, letterSpacing: -0.5, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+            마이페이지
+            <PlusBadge size="sm" variant="soft" />
+          </div>
+          <div style={{
+            background: t.primarySoft, borderRadius: t.radius + 4,
+            padding: '16px', display: 'flex', alignItems: 'center', gap: 14,
+          }}>
+            <Avatar name={MOCK_ME.nickname} size={56} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: t.text }}>{MOCK_ME.nickname}</div>
+              <div style={{ fontSize: 12, color: t.textMuted, marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {MOCK_ME.bio.slice(0, 28)}…
+              </div>
+            </div>
+            <DashButton size="sm" variant="outline" style={{ background: '#fff' }}>수정</DashButton>
+          </div>
+          <div style={{
+            marginTop: 12,
+            borderRadius: t.radius + 2, padding: '14px 16px',
+            background: `linear-gradient(135deg, ${t.plusAccent} 0%, #9B7EFF 100%)`,
+            color: '#fff', display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: 'rgba(255,255,255,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Icon.crown size={18} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 800 }}>Dash+ 이용 중</div>
+              <div style={{ fontSize: 11, opacity: 0.85, marginTop: 2 }}>
+                무제한 지인 탐색 · 다음 결제 5/12
+              </div>
+            </div>
+            <Icon.chevron size={14} />
+          </div>
+        </div>
+        <div style={{ padding: '16px 20px 12px', background: t.bgSoft, flexShrink: 0 }}>
+          <div style={{
+            display: 'flex', background: '#fff', borderRadius: t.radius,
+            padding: 4, border: `1px solid ${t.border}`,
+          }}>
+            <div style={{
+              flex: 1, padding: '9px 10px', borderRadius: t.radius - 2,
+              background: t.primary, color: '#fff',
+              fontSize: 13, fontWeight: 700, textAlign: 'center',
+            }}>받은 요청 <span style={{ opacity: 0.85 }}>3</span></div>
+            <div style={{
+              flex: 1, padding: '9px 10px', borderRadius: t.radius - 2,
+              color: t.textMuted,
+              fontSize: 13, fontWeight: 700, textAlign: 'center',
+            }}>보낸 요청 <span style={{ opacity: 0.6 }}>2</span></div>
+          </div>
+        </div>
+        <div style={{ flex: 1, padding: '0 16px 16px', overflow: 'auto' }}>
+          {MOCK_RECEIVED.map((r) => (
+            <div key={r.id} style={{
+              background: '#fff', borderRadius: t.radius + 2,
+              padding: '14px', marginBottom: 10,
+              border: `1px solid ${t.border}`,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Avatar name={r.name} size={44} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: t.text }}>{r.name}</div>
+                    <StatusBadge status={r.status} />
+                  </div>
+                  <div style={{ fontSize: 12, color: t.textFaint, marginTop: 3 }}>{r.via}</div>
+                </div>
+                <Icon.chevron size={14} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </StaticScreen>
+  );
+}
+
+// ──────────────────────────────────────────────
+// Tweaks panel
+// ──────────────────────────────────────────────
+function TweaksPanel() {
+  const t = useDashTokens();
+  const [on, setOn] = React.useState(false);
+
+  React.useEffect(() => {
+    const onMsg = (e) => {
+      const d = e.data || {};
+      if (d.type === '__activate_edit_mode') setOn(true);
+      if (d.type === '__deactivate_edit_mode') setOn(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const update = (patch) => {
+    setDashTokens(patch);
+    const edits = {};
+    if (patch.primary !== undefined) edits.primary = patch.primary;
+    if (patch.primarySoft !== undefined) edits.primarySoft = patch.primarySoft;
+    if (patch.radius !== undefined) edits.radius = patch.radius;
+    if (patch.isPlus !== undefined) edits.isPlus = patch.isPlus;
+    if (patch.freeHopLimit !== undefined) edits.freeHopLimit = patch.freeHopLimit;
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits }, '*');
+  };
+
+  if (!on) return null;
+
+  const primaries = [
+    { name: '핑크 (기본)', primary: '#FF4B6E', soft: '#FFF5F7' },
+    { name: '코랄', primary: '#FF6B47', soft: '#FFF3EF' },
+    { name: '퍼플', primary: '#7B5CFA', soft: '#F4F0FF' },
+    { name: '로즈', primary: '#E5397A', soft: '#FDEEF4' },
+    { name: '민트', primary: '#00B8A0', soft: '#E8F8F5' },
+  ];
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: 20, right: 20, zIndex: 1000,
+      width: 288, background: '#fff',
+      borderRadius: 16, boxShadow: '0 20px 50px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.04)',
+      padding: 16, fontFamily: '"Pretendard Variable", "Pretendard", system-ui, sans-serif',
+      color: '#1a1a1a', maxHeight: '80vh', overflow: 'auto',
+    }}>
+      <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 12, letterSpacing: -0.3 }}>Tweaks</div>
+
+      {/* Dash+ 토글 */}
+      <div style={{ fontSize: 11, fontWeight: 700, color: '#999', letterSpacing: 0.3, marginBottom: 8, textTransform: 'uppercase' }}>Dash+ 구독 상태</div>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+        <button onClick={() => update({ isPlus: false })}
+          style={{
+            flex: 1, padding: '9px', border: !t.isPlus ? `2px solid ${t.primary}` : '1px solid #eee',
+            background: !t.isPlus ? t.primarySoft : '#fff',
+            color: !t.isPlus ? t.primary : '#999',
+            fontSize: 12, fontWeight: 700, borderRadius: 10, cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}>Free</button>
+        <button onClick={() => update({ isPlus: true })}
+          style={{
+            flex: 1, padding: '9px', border: t.isPlus ? `2px solid ${t.plusAccent}` : '1px solid #eee',
+            background: t.isPlus ? t.plusAccentSoft : '#fff',
+            color: t.isPlus ? t.plusAccent : '#999',
+            fontSize: 12, fontWeight: 700, borderRadius: 10, cursor: 'pointer',
+            fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+          }}>
+          <Icon.crown size={11} /> Dash+
+        </button>
+      </div>
+
+      <div style={{ fontSize: 11, fontWeight: 700, color: '#999', letterSpacing: 0.3, marginBottom: 6, textTransform: 'uppercase' }}>무료 열람 가능 촌수</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+        <input type="range" min="1" max="5" step="1" value={t.freeHopLimit}
+          onChange={(e) => update({ freeHopLimit: +e.target.value })}
+          style={{ flex: 1, accentColor: t.primary }}/>
+        <span style={{ fontSize: 12, fontWeight: 700, color: t.primary, minWidth: 36, textAlign: 'right' }}>
+          ~{t.freeHopLimit}촌
+        </span>
+      </div>
+
+      <div style={{ fontSize: 11, fontWeight: 700, color: '#999', letterSpacing: 0.3, marginBottom: 8, textTransform: 'uppercase' }}>메인 컬러</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6, marginBottom: 14 }}>
+        {primaries.map((p) => (
+          <button key={p.name} onClick={() => update({ primary: p.primary, primarySoft: p.soft })}
+            title={p.name}
+            style={{
+              height: 36, border: t.primary === p.primary ? `2px solid ${p.primary}` : '1px solid #eee',
+              background: p.soft, borderRadius: 10, cursor: 'pointer', padding: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+            <div style={{ width: 18, height: 18, borderRadius: 9, background: p.primary }} />
+          </button>
+        ))}
+      </div>
+
+      <div style={{ fontSize: 11, fontWeight: 700, color: '#999', letterSpacing: 0.3, marginBottom: 8, textTransform: 'uppercase' }}>서브 배경</div>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+        {[
+          { n: '#FFF5F7' }, { n: '#FFEFF2' }, { n: '#FDF4F5' }, { n: '#FFFBFA' }, { n: '#FFEAE8' },
+        ].map((s) => (
+          <button key={s.n} onClick={() => update({ primarySoft: s.n })}
+            style={{
+              flex: 1, height: 26, background: s.n,
+              border: t.primarySoft === s.n ? `2px solid ${t.primary}` : '1px solid #eee',
+              borderRadius: 8, cursor: 'pointer', padding: 0,
+            }}/>
+        ))}
+      </div>
+
+      <div style={{ fontSize: 11, fontWeight: 700, color: '#999', letterSpacing: 0.3, marginBottom: 6, textTransform: 'uppercase' }}>모서리 라운드</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <input type="range" min="4" max="24" step="2" value={t.radius}
+          onChange={(e) => update({ radius: +e.target.value })}
+          style={{ flex: 1, accentColor: t.primary }}/>
+        <span style={{ fontSize: 12, fontWeight: 600, color: t.primary, minWidth: 32, textAlign: 'right' }}>{t.radius}px</span>
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────
+// App
+// ──────────────────────────────────────────────
+function App() {
+  useDashTokens(); // subscribe so canvas contents re-render on tweak
+
+  // Pre-built static states for the canvas overview
+  const staticScreens = [
+    {
+      id: 'home',
+      label: '1. 홈',
+      node: <ScreenHome />,
+      hasTab: true, tab: 'home',
+    },
+    {
+      id: 'mypage',
+      label: '2. 마이페이지 (Free)',
+      node: <ScreenMyPage />,
+      hasTab: true, tab: 'mypage',
+    },
+    {
+      id: 'connections',
+      label: '3a. 지인 리스트 · 2촌',
+      node: <ScreenConnections trail={[MOCK_FRIENDS[0]]} onBack={() => {}} onOpenIntro={() => {}} onDrillDown={() => {}} onUpgrade={() => {}} />,
+      hasTab: false,
+    },
+    {
+      id: 'connections-3rd',
+      label: '3b. 3촌 · Plus 게이트',
+      node: <ScreenConnections trail={[MOCK_FRIENDS[0], MOCK_CONNECTIONS.f1[0]]} onBack={() => {}} onOpenIntro={() => {}} onDrillDown={() => {}} onUpgrade={() => {}} />,
+      hasTab: false,
+    },
+    {
+      id: 'detail',
+      label: '4a. 프로필 상세 · 일반',
+      node: <ScreenProfileDetail mode="normal" hop={2} person={{ name: '재윤', bio: MOCK_CONNECTIONS.f1[0].bio, via: '민수의 소개' }} onBack={() => {}}/>,
+      hasTab: false,
+    },
+    {
+      id: 'detail-accept',
+      label: '4b. 프로필 상세 · 수락 모드',
+      node: <ScreenProfileDetail mode="accept" hop={2} person={{ name: '서아', bio: MOCK_CONNECTIONS.f2[0].bio, via: '지은의 소개' }} onBack={() => {}}/>,
+      hasTab: false,
+    },
+    {
+      id: 'detail-accepted',
+      label: '4c. 프로필 상세 · 수락 후',
+      node: <ScreenProfileDetail mode="accepted" hop={2} person={{ name: '민재', bio: MOCK_CONNECTIONS.f5[0].bio, via: '태현을 통해', contact: '010-2345-6789' }} onBack={() => {}}/>,
+      hasTab: false,
+    },
+    {
+      id: 'edit',
+      label: '5. 프로필 수정',
+      node: <ScreenProfileEdit onBack={() => {}} onSave={() => {}}/>,
+      hasTab: false,
+    },
+    {
+      id: 'plus-plans',
+      label: '6. Dash+ 플랜 (NEW)',
+      node: <ScreenDashPlus onBack={() => {}} onSubscribe={() => {}} />,
+      hasTab: false,
+    },
+    {
+      id: 'empty-home',
+      label: '홈 · 빈 상태',
+      node: <ScreenHome empty />,
+      hasTab: true, tab: 'home',
+    },
+    {
+      id: 'empty-connections',
+      label: '지인 리스트 · 빈 상태',
+      node: <ScreenConnections trail={[MOCK_FRIENDS[3]]} empty onBack={() => {}} onOpenIntro={() => {}} onDrillDown={() => {}} />,
+      hasTab: false,
+    },
+  ];
+
+  return (
+    <>
+      <DesignCanvas>
+        {/* Section 0: Login */}
+        <DCSection id="login" title="로그인 · 온보딩 진입" subtitle="Apple / Google 소셜 로그인 2개만 지원. iOS는 Apple 우선 (Apple 가이드라인), Android는 Google 우선.">
+          <DCArtboard id="login-ios" label="iOS · Apple / Google 로그인" width={PHONE_W + 4} height={PHONE_H + 4}>
+            <StaticScreen os="ios" hasTab={false}>
+              <ScreenLogin os="ios" onAppleLogin={() => {}} onGoogleLogin={() => {}} />
+            </StaticScreen>
+          </DCArtboard>
+          <DCArtboard id="login-android" label="Android · Google / Apple 로그인" width={PHONE_W + 4} height={PHONE_H + 4}>
+            <StaticScreen os="android" hasTab={false}>
+              <ScreenLogin os="android" onAppleLogin={() => {}} onGoogleLogin={() => {}} />
+            </StaticScreen>
+          </DCArtboard>
+        </DCSection>
+
+        {/* Section 1: Interactive prototypes */}
+        <DCSection id="prototype" title="인터랙티브 프로토타입" subtitle="실제 동작 플로우 — 친구 → 지인(2촌) → 지인의 지인(3촌, Plus) → 4촌... 인스타그램 팔로우 타듯 무한 확장. 마이페이지에서 Dash+ 업그레이드 유도.">
+          <DCArtboard id="ios-proto" label="iOS · Home" width={PHONE_W + 4} height={PHONE_H + 4}>
+            <DashPrototype os="ios" initial="home" />
+          </DCArtboard>
+          <DCArtboard id="android-proto" label="Android · Home" width={PHONE_W + 4} height={PHONE_H + 4}>
+            <DashPrototype os="android" initial="home" />
+          </DCArtboard>
+          <DCArtboard id="ios-proto-my" label="iOS · MyPage 진입 (Plus 유도)" width={PHONE_W + 4} height={PHONE_H + 4}>
+            <DashPrototype os="ios" initial="mypage" />
+          </DCArtboard>
+        </DCSection>
+
+        {/* Section 1.5: Dash+ feature highlight */}
+        <DCSection id="plus" title="Dash+ · 유료 회원 기능" subtitle="지인의 지인의 지인까지 무한 탐색. 무료는 2촌까지, 3촌부터는 Plus 전용 (Tweaks 패널에서 Free/Plus 상태와 무료 촌수 한계를 토글해볼 수 있어요).">
+          <DCArtboard id="plus-gate-3rd" label="3촌 Plus 게이트 (Free)" width={PHONE_W + 4} height={PHONE_H + 4}>
+            <StaticScreen os="ios">
+              <ScreenConnections trail={[MOCK_FRIENDS[0], MOCK_CONNECTIONS.f1[0]]} onBack={() => {}} onOpenIntro={() => {}} onDrillDown={() => {}} onUpgrade={() => {}} />
+            </StaticScreen>
+          </DCArtboard>
+          <DCArtboard id="plus-plans-page" label="Dash+ 플랜 페이지" width={PHONE_W + 4} height={PHONE_H + 4}>
+            <StaticScreen os="ios">
+              <ScreenDashPlus onBack={() => {}} onSubscribe={() => {}} />
+            </StaticScreen>
+          </DCArtboard>
+          <DCArtboard id="plus-profile-blurred" label="3촌 프로필 · 소개글 블러" width={PHONE_W + 4} height={PHONE_H + 4}>
+            <StaticScreen os="ios">
+              <ScreenProfileDetail mode="normal" hop={3} person={{ name: '수민', bio: MOCK_DEEP_CONNECTIONS.c1[0].bio, via: '재윤을 통해' }} onBack={() => {}} onUpgrade={() => {}} />
+            </StaticScreen>
+          </DCArtboard>
+          <DCArtboard id="plus-mypage-active" label="마이페이지 · Plus 활성" width={PHONE_W + 4} height={PHONE_H + 4}>
+            <PlusActiveDemo />
+          </DCArtboard>
+        </DCSection>
+
+        {/* Section 2: iOS static screens */}
+        <DCSection id="ios-screens" title="iOS · 화면 스펙" subtitle="요구사항 기반 5개 화면 + 상태 변형. 탭하면 포커스 모드로 확대해서 볼 수 있어요.">
+          {staticScreens.map((s) => (
+            <DCArtboard key={'ios-' + s.id} id={'ios-' + s.id} label={s.label}
+              width={PHONE_W + 4} height={PHONE_H + 4}>
+              <StaticScreen os="ios" hasTab={s.hasTab} tab={s.tab}>{s.node}</StaticScreen>
+            </DCArtboard>
+          ))}
+        </DCSection>
+
+        {/* Section 3: Android static screens */}
+        <DCSection id="android-screens" title="Android · 화면 스펙" subtitle="Material 레이아웃을 의식하되 Dash 스타일을 유지. 내비게이션 바 + 상태바 차이만 있고 컨텐츠는 동일한 디자인 시스템을 공유.">
+          {staticScreens.map((s) => (
+            <DCArtboard key={'a-' + s.id} id={'a-' + s.id} label={s.label}
+              width={PHONE_W + 4} height={PHONE_H + 4}>
+              <StaticScreen os="android" hasTab={s.hasTab} tab={s.tab}>{s.node}</StaticScreen>
+            </DCArtboard>
+          ))}
+        </DCSection>
+
+        {/* Section 4: Design system */}
+        <DCSection id="ds" title="디자인 시스템" subtitle="공통 컴포넌트 · 컬러 · 타이포. Tweaks 패널에서 메인/서브 컬러와 모서리 라운드를 실시간으로 바꿔볼 수 있어요.">
+          <DCArtboard id="ds-colors" label="컬러 팔레트" width={540} height={360}>
+            <DSColors />
+          </DCArtboard>
+          <DCArtboard id="ds-avatars" label="아바타" width={540} height={220}>
+            <DSAvatars />
+          </DCArtboard>
+          <DCArtboard id="ds-badges" label="상태 뱃지" width={540} height={220}>
+            <DSBadges />
+          </DCArtboard>
+          <DCArtboard id="ds-buttons" label="버튼" width={540} height={300}>
+            <DSButtons />
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+      <TweaksPanel />
+    </>
+  );
+}
+
+// ──────────────────────────────────────────────
+// Design-system artboards
+// ──────────────────────────────────────────────
+function DSColors() {
+  const t = useDashTokens();
+  const rows = [
+    { label: 'Primary', val: t.primary, sub: '메인 · 핑크/코랄' },
+    { label: 'Primary soft', val: t.primarySoft, sub: '서브 · 연분홍', light: true },
+    { label: 'Accept', val: t.accept, sub: '수락' },
+    { label: 'Text', val: t.text, sub: '본문' },
+    { label: 'Text muted', val: t.textMuted, sub: '보조 텍스트' },
+    { label: 'Text faint', val: t.textFaint, sub: '힌트 · 캡션' },
+  ];
+  return (
+    <div style={{ padding: 24, fontFamily: 'inherit' }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: t.textFaint, letterSpacing: 0.4, marginBottom: 14, textTransform: 'uppercase' }}>Colors</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        {rows.map((r) => (
+          <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px', border: `1px solid ${t.border}`, borderRadius: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: r.val, border: r.light ? `1px solid ${t.border}` : 'none' }} />
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: t.text, letterSpacing: -0.2 }}>{r.label}</div>
+              <div style={{ fontSize: 11, color: t.textFaint, marginTop: 2 }}>{r.val} · {r.sub}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DSAvatars() {
+  const t = useDashTokens();
+  const names = ['수지', '민수', '재윤', '서아', '도윤', '하늘'];
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: t.textFaint, letterSpacing: 0.4, marginBottom: 14, textTransform: 'uppercase' }}>Avatar · 닉네임 기반 컬러</div>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        {names.map((n) => (
+          <div key={n} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <Avatar name={n} size={56} />
+            <div style={{ fontSize: 12, color: t.textMuted }}>{n}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <Avatar name="민" size={32} /><Avatar name="민" size={44} /><Avatar name="민" size={56} /><Avatar name="민" size={72} />
+        <div style={{ fontSize: 12, color: t.textFaint, marginLeft: 8 }}>32 · 44 · 56 · 72px</div>
+      </div>
+    </div>
+  );
+}
+
+function DSBadges() {
+  const t = useDashTokens();
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: t.textFaint, letterSpacing: 0.4, marginBottom: 14, textTransform: 'uppercase' }}>상태 뱃지</div>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <StatusBadge status="PENDING" />
+        <StatusBadge status="ACCEPTED" />
+        <StatusBadge status="REJECTED" />
+      </div>
+      <div style={{ marginTop: 18, fontSize: 12, color: t.textMuted, lineHeight: 1.6 }}>
+        대기중: 주황 계열 · 수락됨: 초록 계열 · 거절됨: 회색 계열
+      </div>
+    </div>
+  );
+}
+
+function DSButtons() {
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: '#999', letterSpacing: 0.4, marginBottom: 14, textTransform: 'uppercase' }}>Button · Variants</div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+        <DashButton variant="primary">연락 요청</DashButton>
+        <DashButton variant="primarySoft">지인 목록</DashButton>
+        <DashButton variant="outline">프로필</DashButton>
+        <DashButton variant="secondary">중복 확인</DashButton>
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+        <DashButton variant="reject">거절</DashButton>
+        <DashButton variant="accept">수락하기</DashButton>
+      </div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: '#999', letterSpacing: 0.4, marginBottom: 10, textTransform: 'uppercase' }}>Sizes</div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <DashButton size="sm" variant="primary">SM</DashButton>
+        <DashButton size="md" variant="primary">MD</DashButton>
+        <DashButton size="lg" variant="primary">LG</DashButton>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
