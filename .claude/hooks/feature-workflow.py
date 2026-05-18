@@ -20,8 +20,8 @@ STEP 3 — 구현
   • BE: Controller → Service → Repository → Domain 방향 엄수
   • FE: Presentation → Application → Data → Infrastructure 방향 엄수
 
-STEP 4 — 코드 리뷰 (kotlin-reviewer + security-reviewer 에이전트)
-  • BE Kotlin 코드 → kotlin-reviewer
+STEP 4 — 코드 리뷰 (java-reviewer + security-reviewer 에이전트)
+  • BE Java 코드 → java-reviewer
   • 인증/보안 관련 → security-reviewer
 
 STEP 5 — 문서 갱신 (doc-updater 에이전트)

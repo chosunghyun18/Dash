@@ -8,7 +8,7 @@
 
 ```
 dash/
-├── BE/           Spring Boot 3.3 + Kotlin REST API
+├── BE/           Spring Boot 3.3 + Java 21 REST API
 ├── FE/           React Native + Expo (iOS + Android)
 ├── memory/       아키텍처 결정사항 및 컨텍스트
 └── .claude/      에이전트, 커맨드, 설정
@@ -18,7 +18,7 @@ dash/
 
 | 영역 | 기술 |
 |------|------|
-| 백엔드 | Spring Boot 3.3, Kotlin 2.0, PostgreSQL, JWT |
+| 백엔드 | Spring Boot 3.3, Java 21, Lombok, PostgreSQL, JWT, Flyway |
 | 프론트엔드 | React Native, Expo Router, TypeScript, Zustand, React Query |
 
 ## 아키텍처
@@ -33,7 +33,7 @@ dash/
 ├──────────────────────────────────┤
 │  Persistence   Repository / Entity│
 ├──────────────────────────────────┤
-│  Domain        Model / VO (순수Kotlin)│
+│  Domain        Model / VO (순수 Java)  │
 └──────────────────────────────────┘
 ```
 
@@ -71,7 +71,7 @@ dash/
 | `fe-architect` | FE React Native 아키텍처 설계 및 검토 |
 | `doc-updater` | 코드맵 및 문서 자동 갱신 |
 | `planner` | BE+FE 기능 구현 계획 수립 |
-| `kotlin-reviewer` | BE Kotlin 코드 리뷰 |
+| `java-reviewer` | BE Java 코드 리뷰 |
 | `security-reviewer` | 보안 취약점 검토 |
 
 ## 커맨드
@@ -82,7 +82,7 @@ dash/
 | `/fe-arch` | fe-architect | FE 화면/컴포넌트 설계 (새 기능 전) |
 | `/plan` | planner | BE+FE 전체 구현 계획 |
 | `/update-docs` | doc-updater | 문서 + 코드맵 갱신 |
-| `/review` | kotlin-reviewer + security-reviewer | 코드 리뷰 |
+| `/review` | java-reviewer + security-reviewer | 코드 리뷰 |
 
 ## 개발 워크플로우
 

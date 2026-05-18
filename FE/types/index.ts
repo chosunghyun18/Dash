@@ -12,6 +12,7 @@ export interface Acquaintance {
   nickname: string;
   profileImageUrl: string | null;
   hasAcquaintances: boolean;
+  bio?: string | null;
 }
 
 export interface UserProfile {

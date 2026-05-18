@@ -4,7 +4,7 @@ description: BE + FE 구현 계획 수립. 코드 작성 전 반드시 사용자
 
 # /plan
 
-planner 에이전트를 호출하여 BE(Spring/Kotlin) + FE(React Native) 양쪽을 아우르는 구현 계획을 작성합니다.
+planner 에이전트를 호출하여 BE(Spring/Java) + FE(React Native) 양쪽을 아우르는 구현 계획을 작성합니다.
 
 ## 사용 시점
 - 새 기능 구현 시작 전

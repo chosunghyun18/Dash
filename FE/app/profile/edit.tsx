@@ -1,32 +1,49 @@
 import { useState, useEffect } from 'react';
 import {
-  View, Text, TextInput, ScrollView, StyleSheet,
-  TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
+  View,
+  Text,
+  TextInput,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
+import { Phone, Mail, Check, X } from 'lucide-react-native';
 import { useMyProfile, useUpdateMyProfile, useCheckNickname } from '../../hooks/useFriends';
+import { DashButton } from '../../components/DashButton';
+import { colors, radius, spacing, typography } from '../../theme';
+
+type ContactType = 'phone' | 'email';
 
 export default function ProfileEditScreen() {
   const router = useRouter();
   const { data: myProfile, isLoading: isProfileLoading } = useMyProfile();
 
   const [nickname, setNickname] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
+  const [contactType, setContactType] = useState<ContactType>('phone');
+  const [contact, setContact] = useState('');
   const [introText, setIntroText] = useState('');
   const [nicknameChecked, setNicknameChecked] = useState<boolean | null>(null);
   const [lastCheckedNickname, setLastCheckedNickname] = useState('');
   const [initialized, setInitialized] = useState(false);
 
-  // 프로필 데이터 로드 후 초기값 세팅
   useEffect(() => {
     if (myProfile && !initialized) {
       setNickname(myProfile.nickname);
-      setPhone(myProfile.phone ?? '');
-      setEmail(myProfile.email ?? '');
+      if (myProfile.email) {
+        setContactType('email');
+        setContact(myProfile.email);
+      } else {
+        setContactType('phone');
+        setContact(myProfile.phone ?? '');
+      }
       setIntroText(myProfile.introText);
       setLastCheckedNickname(myProfile.nickname);
-      setNicknameChecked(true); // 현재 닉네임은 중복 체크 통과 상태
+      setNicknameChecked(true);
       setInitialized(true);
     }
   }, [myProfile, initialized]);
@@ -48,9 +65,6 @@ export default function ProfileEditScreen() {
       onSuccess: (res) => {
         setNicknameChecked(res.available);
         setLastCheckedNickname(nickname.trim());
-        if (!res.available) {
-          Alert.alert('중복 확인', '이미 사용 중인 닉네임이에요.');
-        }
       },
       onError: () => Alert.alert('오류', '잠시 후 다시 시도해주세요.'),
     });
@@ -69,40 +83,37 @@ export default function ProfileEditScreen() {
       Alert.alert('알림', '사용할 수 없는 닉네임이에요.');
       return;
     }
-    if (phone.trim() && email.trim()) {
-      Alert.alert('알림', '연락처는 휴대폰 번호 또는 이메일 중 하나만 입력해주세요.');
-      return;
-    }
     if (!introText.trim()) {
       Alert.alert('알림', '소개글을 입력해주세요.');
       return;
     }
 
-    updateProfile(
-      {
-        nickname: nickname.trim(),
-        phone: phone.trim() || undefined,
-        email: email.trim() || undefined,
-        introText: introText.trim(),
+    const payload = {
+      nickname: nickname.trim(),
+      phone: contactType === 'phone' && contact.trim() ? contact.trim() : undefined,
+      email: contactType === 'email' && contact.trim() ? contact.trim() : undefined,
+      introText: introText.trim(),
+    };
+
+    updateProfile(payload, {
+      onSuccess: () => {
+        Alert.alert('완료', '프로필이 저장됐어요!', [
+          { text: '확인', onPress: () => router.back() },
+        ]);
       },
-      {
-        onSuccess: () => {
-          Alert.alert('완료', '프로필이 저장됐어요!', [
-            { text: '확인', onPress: () => router.back() },
-          ]);
-        },
-        onError: () => Alert.alert('오류', '저장에 실패했어요. 다시 시도해주세요.'),
-      }
-    );
+      onError: () => Alert.alert('오류', '저장에 실패했어요. 다시 시도해주세요.'),
+    });
   };
 
   if (isProfileLoading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#FF4B6E" size="large" />
+        <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
   }
+
+  const counterColor = introText.length > 450 ? '#D46B08' : colors.textFaint;
 
   return (
     <>
@@ -111,15 +122,17 @@ export default function ProfileEditScreen() {
           headerShown: true,
           headerTitle: '프로필 수정',
           headerBackTitle: '',
-          headerTintColor: '#FF4B6E',
+          headerTintColor: colors.text,
           headerShadowVisible: false,
-          headerStyle: { backgroundColor: '#fff' },
+          headerStyle: { backgroundColor: colors.bg },
+          headerTitleStyle: { fontSize: 16, fontWeight: '700' },
           headerRight: () => (
             <TouchableOpacity onPress={handleSave} disabled={isSaving}>
-              {isSaving
-                ? <ActivityIndicator color="#FF4B6E" size="small" />
-                : <Text style={styles.saveBtn}>저장</Text>
-              }
+              {isSaving ? (
+                <ActivityIndicator color={colors.primary} size="small" />
+              ) : (
+                <Text style={[typography.listItemName, { color: colors.primary }]}>저장</Text>
+              )}
             </TouchableOpacity>
           ),
         }}
@@ -129,116 +142,162 @@ export default function ProfileEditScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-
           {/* 닉네임 */}
           <View style={styles.field}>
-            <Text style={styles.label}>닉네임 <Text style={styles.required}>*</Text></Text>
+            <Text style={styles.label}>닉네임 <Text style={{ color: colors.primary }}>*</Text></Text>
             <View style={styles.row}>
               <TextInput
-                style={[styles.input, styles.inputFlex]}
+                style={[styles.input, { flex: 1 }]}
                 value={nickname}
                 onChangeText={handleNicknameChange}
                 placeholder="닉네임 입력"
+                placeholderTextColor={colors.textFaint}
                 maxLength={12}
                 returnKeyType="done"
               />
-              <TouchableOpacity
-                style={[styles.checkBtn, isChecking && styles.checkBtnDisabled]}
+              <DashButton
+                title="중복 확인"
+                variant="outline"
+                size="md"
                 onPress={handleCheckNickname}
-                disabled={isChecking}
-              >
-                {isChecking
-                  ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text style={styles.checkBtnText}>중복 확인</Text>
-                }
-              </TouchableOpacity>
+                loading={isChecking}
+              />
             </View>
             {nicknameChecked === true && (
-              <Text style={styles.available}>사용 가능한 닉네임이에요</Text>
+              <View style={styles.feedbackRow}>
+                <Check size={14} color={colors.acceptText} />
+                <Text style={[styles.feedback, { color: colors.acceptText }]}>사용 가능한 닉네임이에요</Text>
+              </View>
             )}
             {nicknameChecked === false && (
-              <Text style={styles.unavailable}>이미 사용 중인 닉네임이에요</Text>
+              <View style={styles.feedbackRow}>
+                <X size={14} color="#CF1322" />
+                <Text style={[styles.feedback, { color: '#CF1322' }]}>이미 사용 중인 닉네임이에요</Text>
+              </View>
             )}
           </View>
 
           {/* 연락처 */}
           <View style={styles.field}>
             <Text style={styles.label}>연락처</Text>
+            <View style={styles.toggleRow}>
+              <ContactToggle
+                label="휴대폰"
+                icon="phone"
+                active={contactType === 'phone'}
+                onPress={() => {
+                  setContactType('phone');
+                  setContact('');
+                }}
+              />
+              <ContactToggle
+                label="이메일"
+                icon="email"
+                active={contactType === 'email'}
+                onPress={() => {
+                  setContactType('email');
+                  setContact('');
+                }}
+              />
+            </View>
             <TextInput
               style={styles.input}
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="휴대폰 번호 (선택)"
-              keyboardType="phone-pad"
-              returnKeyType="done"
-            />
-            <TextInput
-              style={[styles.input, { marginTop: 8 }]}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="이메일 (선택)"
-              keyboardType="email-address"
+              value={contact}
+              onChangeText={setContact}
+              placeholder={contactType === 'phone' ? '010-0000-0000' : 'name@example.com'}
+              placeholderTextColor={colors.textFaint}
+              keyboardType={contactType === 'phone' ? 'phone-pad' : 'email-address'}
               autoCapitalize="none"
               returnKeyType="done"
             />
-            <Text style={styles.hint}>휴대폰 번호 또는 이메일 중 하나만 입력  •  수락한 상대에게만 공개돼요</Text>
+            <Text style={styles.hint}>수락한 상대에게만 공개됩니다</Text>
           </View>
 
           {/* 소개글 */}
           <View style={styles.field}>
-            <Text style={styles.label}>소개글 <Text style={styles.required}>*</Text></Text>
+            <Text style={styles.label}>나를 소개합니다 <Text style={{ color: colors.primary }}>*</Text></Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               value={introText}
-              onChangeText={setIntroText}
+              onChangeText={(t) => setIntroText(t.slice(0, 500))}
               placeholder="나를 소개해주세요..."
+              placeholderTextColor={colors.textFaint}
               multiline
               maxLength={500}
               textAlignVertical="top"
             />
-            <Text style={styles.charCount}>{introText.length} / 500</Text>
+            <Text style={[styles.counter, { color: counterColor }]}>
+              {introText.length} / 500
+            </Text>
           </View>
-
         </ScrollView>
       </KeyboardAvoidingView>
     </>
   );
 }
 
+function ContactToggle({
+  label,
+  icon,
+  active,
+  onPress,
+}: {
+  label: string;
+  icon: 'phone' | 'email';
+  active: boolean;
+  onPress: () => void;
+}) {
+  const fg = active ? colors.primary : colors.textMuted;
+  const Ico = icon === 'phone' ? Phone : Mail;
+  return (
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={onPress}
+      style={[
+        styles.toggle,
+        {
+          backgroundColor: active ? colors.primarySoft : colors.bg,
+          borderColor: active ? colors.primary : colors.border,
+        },
+      ]}
+    >
+      <Ico size={16} color={fg} />
+      <Text style={[typography.buttonMd, { color: fg }]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: 20, paddingBottom: 60 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  saveBtn: { fontSize: 16, fontWeight: '700', color: '#FF4B6E', marginRight: 4 },
-  field: { marginBottom: 28 },
-  label: { fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 8 },
-  required: { color: '#FF4B6E' },
-  row: { flexDirection: 'row', gap: 8 },
-  inputFlex: { flex: 1 },
+  container: { flex: 1, backgroundColor: colors.bg },
+  content: { padding: spacing.xxl, paddingBottom: 60 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
+  field: { marginBottom: 24 },
+  label: { ...typography.caption, color: colors.text, fontWeight: '700', marginBottom: 8 },
+  row: { flexDirection: 'row', gap: spacing.xs, alignItems: 'center' },
   input: {
+    backgroundColor: colors.bg,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 10,
+    borderColor: colors.border,
+    borderRadius: radius.md,
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: '#1A1A1A',
-    backgroundColor: '#FAFAFA',
+    paddingVertical: 11,
+    fontSize: 14,
+    color: colors.text,
   },
-  textArea: { height: 160, paddingTop: 12 },
-  checkBtn: {
-    paddingHorizontal: 14,
+  textArea: { height: 140, paddingTop: 12 },
+  feedbackRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
+  feedback: { fontSize: 12, letterSpacing: -0.1 },
+  hint: { ...typography.hint, color: colors.textFaint, marginTop: 6 },
+  counter: { marginTop: 6, fontSize: 12, textAlign: 'right' },
+  toggleRow: { flexDirection: 'row', gap: spacing.xs, marginBottom: spacing.sm },
+  toggle: {
+    flex: 1,
     paddingVertical: 12,
-    backgroundColor: '#FF4B6E',
-    borderRadius: 10,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 80,
+    gap: 6,
   },
-  checkBtnDisabled: { opacity: 0.6 },
-  checkBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  available: { marginTop: 6, fontSize: 13, color: '#52C41A' },
-  unavailable: { marginTop: 6, fontSize: 13, color: '#FF4B6E' },
-  hint: { marginTop: 6, fontSize: 12, color: '#999' },
-  charCount: { marginTop: 6, fontSize: 12, color: '#999', textAlign: 'right' },
 });

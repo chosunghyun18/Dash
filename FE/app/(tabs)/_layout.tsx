@@ -1,18 +1,25 @@
 import { Tabs } from 'expo-router';
+import { Platform } from 'react-native';
+import { colors, fontFamily } from '../../theme';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#FF4B6E',
-        tabBarInactiveTintColor: '#999',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: '#BFBFBF',
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontFamily,
+          letterSpacing: -0.3,
+        },
         tabBarStyle: {
           borderTopWidth: 1,
-          borderTopColor: '#F0F0F0',
-          height: 60,
-          paddingBottom: 8,
+          borderTopColor: colors.border,
           paddingTop: 8,
+          paddingBottom: Platform.select({ ios: 24, android: 14 }),
+          height: Platform.select({ ios: 80, android: 64 }),
         },
       }}
     >

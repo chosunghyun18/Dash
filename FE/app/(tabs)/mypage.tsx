@@ -1,14 +1,15 @@
+import { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ChevronRight, Phone, Mail } from 'lucide-react-native';
 import { Avatar } from '../../components/Avatar';
+import { DashButton } from '../../components/DashButton';
+import { StatusBadge } from '../../components/StatusBadge';
 import { useSentRequests, useReceivedRequests, useMyProfile } from '../../hooks/useFriends';
+import { colors, radius, spacing, typography } from '../../theme';
 
-const STATUS_LABEL: Record<string, string> = {
-  PENDING: '대기중',
-  ACCEPTED: '수락됨',
-  REJECTED: '거절됨',
-};
+type Tab = 'received' | 'sent';
 
 export default function MyPageScreen() {
   const router = useRouter();
@@ -17,161 +18,225 @@ export default function MyPageScreen() {
   const { data: received } = useReceivedRequests();
   const { data: sent } = useSentRequests();
 
+  const [tab, setTab] = useState<Tab>('received');
+
   const displayNickname = myProfile?.nickname ?? '나';
+  const bioPreview = (myProfile?.introText ?? '').slice(0, 28);
+  const receivedCount = received?.length ?? 0;
+  const sentCount = sent?.length ?? 0;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <Text style={styles.headerTitle}>마이페이지</Text>
-      </View>
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+        <View style={[styles.headerArea, { paddingTop: insets.top + 12 }]}>
+          <Text style={[typography.screenTitle, { color: colors.text }]}>마이페이지</Text>
 
-      {/* 프로필 카드 */}
-      <View style={styles.profileCard}>
-        <Avatar nickname={displayNickname} size={64} />
-        <View style={styles.profileInfo}>
-          <Text style={styles.nickname}>{displayNickname}</Text>
-          {myProfile?.phone && (
-            <Text style={styles.profileContact}>📞 {myProfile.phone}</Text>
-          )}
-          {myProfile?.email && (
-            <Text style={styles.profileContact}>✉️ {myProfile.email}</Text>
-          )}
-          <TouchableOpacity style={styles.editBtn} onPress={() => router.push('/profile/edit')}>
-            <Text style={styles.editBtnText}>나를 소개합니다 수정</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.divider} />
-
-      {/* 받은 연락 요청 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>받은 연락 요청</Text>
-        {!received?.length ? (
-          <Text style={styles.emptyText}>받은 요청이 없어요</Text>
-        ) : (
-          received.map((r) => {
-            const isPending = r.status === 'PENDING';
-            return (
-              <TouchableOpacity
-                key={r.id}
-                style={styles.requestItem}
-                onPress={isPending ? () => router.push(`/profile/${r.requesterUserId}?requestId=${r.id}`) : undefined}
-                activeOpacity={isPending ? 0.7 : 1}
-              >
-                <Avatar nickname={r.requesterNickname} size={40} />
-                <View style={styles.requestInfo}>
-                  <Text style={styles.requestNickname}>{r.requesterNickname}</Text>
-                  {r.status === 'ACCEPTED' && (r.contactPhone || r.contactEmail) && (
-                    <View style={styles.contactReveal}>
-                      {r.contactPhone && <Text style={styles.contactText}>📞 {r.contactPhone}</Text>}
-                      {r.contactEmail && <Text style={styles.contactText}>✉️ {r.contactEmail}</Text>}
-                    </View>
-                  )}
-                </View>
-                <View style={styles.statusWrap}>
-                  <Text style={[
-                    styles.requestStatus,
-                    r.status === 'ACCEPTED' && styles.statusAccepted,
-                    r.status === 'REJECTED' && styles.statusRejected,
-                    r.status === 'PENDING' && styles.statusPending,
-                  ]}>
-                    {STATUS_LABEL[r.status]}
-                  </Text>
-                  {isPending && <Text style={styles.chevron}>›</Text>}
-                </View>
-              </TouchableOpacity>
-            );
-          })
-        )}
-      </View>
-
-      <View style={styles.divider} />
-
-      {/* 보낸 연락 요청 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>보낸 연락 요청</Text>
-        {!sent?.length ? (
-          <Text style={styles.emptyText}>보낸 요청이 없어요</Text>
-        ) : (
-          sent.map((r) => (
-            <View key={r.id} style={styles.requestItem}>
-              <Avatar nickname={r.targetNickname} size={40} />
-              <View style={styles.requestInfo}>
-                <Text style={styles.requestNickname}>{r.targetNickname}</Text>
-                {r.status === 'ACCEPTED' && (r.contactPhone || r.contactEmail) && (
-                  <View style={styles.contactReveal}>
-                    {r.contactPhone && <Text style={styles.contactText}>📞 {r.contactPhone}</Text>}
-                    {r.contactEmail && <Text style={styles.contactText}>✉️ {r.contactEmail}</Text>}
-                  </View>
-                )}
-              </View>
-              <Text style={[
-                styles.requestStatus,
-                r.status === 'ACCEPTED' && styles.statusAccepted,
-                r.status === 'REJECTED' && styles.statusRejected,
-                r.status === 'PENDING' && styles.statusPending,
-              ]}>
-                {STATUS_LABEL[r.status]}
-              </Text>
+          <View style={styles.profileCard}>
+            <Avatar nickname={displayNickname} size={56} />
+            <View style={styles.profileInfo}>
+              <Text style={[typography.listItemName, { color: colors.text }]}>{displayNickname}</Text>
+              {bioPreview ? (
+                <Text style={[typography.hint, { color: colors.textMuted, marginTop: 4 }]} numberOfLines={1}>
+                  {bioPreview}
+                </Text>
+              ) : null}
+              <DashButton
+                title="나를 소개합니다 수정"
+                variant="outline"
+                size="sm"
+                onPress={() => router.push('/profile/edit')}
+                style={{ marginTop: 10 }}
+              />
             </View>
-          ))
-        )}
+          </View>
+        </View>
+
+        <View style={styles.softSection}>
+          <View style={styles.segmented}>
+            <Segment
+              label={`받은 요청 ${receivedCount}`}
+              active={tab === 'received'}
+              onPress={() => setTab('received')}
+            />
+            <Segment
+              label={`보낸 요청 ${sentCount}`}
+              active={tab === 'sent'}
+              onPress={() => setTab('sent')}
+            />
+          </View>
+
+          {tab === 'received' ? (
+            received && received.length > 0 ? (
+              received.map((r) => (
+                <RequestCard
+                  key={r.id}
+                  nickname={r.requesterNickname}
+                  status={r.status}
+                  contactPhone={r.contactPhone}
+                  contactEmail={r.contactEmail}
+                  onPress={
+                    r.status === 'PENDING'
+                      ? () => router.push(`/profile/${r.requesterUserId}?requestId=${r.id}`)
+                      : undefined
+                  }
+                />
+              ))
+            ) : (
+              <EmptyText label="받은 요청이 없어요" />
+            )
+          ) : sent && sent.length > 0 ? (
+            sent.map((r) => (
+              <RequestCard
+                key={r.id}
+                nickname={r.targetNickname}
+                status={r.status}
+                contactPhone={r.contactPhone}
+                contactEmail={r.contactEmail}
+              />
+            ))
+          ) : (
+            <EmptyText label="보낸 요청이 없어요" />
+          )}
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+function Segment({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={onPress}
+      style={[styles.segment, active && styles.segmentActive]}
+    >
+      <Text
+        style={[
+          typography.buttonMd,
+          { color: active ? '#fff' : colors.textMuted, textAlign: 'center' },
+        ]}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+interface RequestCardProps {
+  nickname: string;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  contactPhone?: string;
+  contactEmail?: string;
+  onPress?: () => void;
+}
+
+function RequestCard({ nickname, status, contactPhone, contactEmail, onPress }: RequestCardProps) {
+  const Wrapper = onPress ? TouchableOpacity : View;
+  return (
+    <Wrapper
+      style={styles.requestCard}
+      activeOpacity={0.85}
+      {...(onPress ? { onPress } : {})}
+    >
+      <View style={styles.requestRow}>
+        <Avatar nickname={nickname} size={44} />
+        <View style={styles.requestInfo}>
+          <Text style={[typography.listItemName, { color: colors.text }]} numberOfLines={1}>
+            {nickname}
+          </Text>
+          <View style={{ marginTop: 6, flexDirection: 'row', flexWrap: 'wrap' }}>
+            <StatusBadge status={status} />
+          </View>
+        </View>
+        {onPress ? <ChevronRight size={20} color={colors.textFaint} /> : null}
       </View>
-    </ScrollView>
+
+      {status === 'ACCEPTED' && (contactPhone || contactEmail) && (
+        <View style={styles.contactRow}>
+          {contactPhone && (
+            <View style={styles.contactLine}>
+              <Phone size={14} color={colors.acceptText} />
+              <Text style={[typography.caption, { color: colors.acceptText }]}>{contactPhone}</Text>
+            </View>
+          )}
+          {contactEmail && (
+            <View style={styles.contactLine}>
+              <Mail size={14} color={colors.acceptText} />
+              <Text style={[typography.caption, { color: colors.acceptText }]}>{contactEmail}</Text>
+            </View>
+          )}
+        </View>
+      )}
+    </Wrapper>
+  );
+}
+
+function EmptyText({ label }: { label: string }) {
+  return (
+    <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+      <Text style={[typography.caption, { color: colors.textFaint }]}>{label}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { paddingBottom: 40 },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+  container: { flex: 1, backgroundColor: colors.bg },
+  headerArea: {
+    paddingHorizontal: spacing.xxl,
+    paddingBottom: spacing.xxl,
+    backgroundColor: colors.bg,
+    gap: spacing.lg,
   },
-  headerTitle: { fontSize: 26, fontWeight: '800', color: '#1A1A1A' },
   profileCard: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: 20,
-    gap: 16,
-  },
-  profileInfo: { flex: 1 },
-  nickname: { fontSize: 18, fontWeight: '700', color: '#1A1A1A', marginBottom: 4 },
-  profileContact: { fontSize: 13, color: '#555', marginBottom: 2 },
-  editBtn: {
-    alignSelf: 'flex-start',
-    marginTop: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#F8F8F8',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  editBtnText: { fontSize: 13, color: '#444', fontWeight: '500' },
-  divider: { height: 8, backgroundColor: '#F8F8F8' },
-  section: { padding: 20 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: '#1A1A1A', marginBottom: 12 },
-  emptyText: { color: '#999', fontSize: 14 },
-  requestItem: {
-    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    gap: 12,
+    gap: spacing.lg,
+    padding: spacing.lg,
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.lg,
   },
-  requestInfo: { flex: 1 },
-  requestNickname: { fontSize: 15, fontWeight: '600', color: '#1A1A1A' },
-  contactReveal: { marginTop: 4, gap: 2 },
-  contactText: { fontSize: 13, color: '#333' },
-  statusWrap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  requestStatus: { fontSize: 13, fontWeight: '500' },
-  statusPending: { color: '#FAAD14' },
-  statusAccepted: { color: '#52C41A' },
-  statusRejected: { color: '#FF4B6E' },
-  chevron: { fontSize: 18, color: '#CCC', lineHeight: 20 },
+  profileInfo: { flex: 1, minWidth: 0 },
+  softSection: {
+    backgroundColor: colors.bgSoft,
+    paddingHorizontal: spacing.xxl,
+    paddingTop: spacing.xxl,
+    paddingBottom: spacing.xxxl,
+    gap: spacing.md,
+    minHeight: 400,
+  },
+  segmented: {
+    flexDirection: 'row',
+    backgroundColor: colors.bg,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 4,
+    gap: 4,
+  },
+  segment: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentActive: { backgroundColor: colors.primary },
+  requestCard: {
+    backgroundColor: colors.bg,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  requestRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  requestInfo: { flex: 1, minWidth: 0 },
+  contactRow: {
+    backgroundColor: colors.acceptSoft,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: 4,
+  },
+  contactLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
 });

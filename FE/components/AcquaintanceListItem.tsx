@@ -1,48 +1,57 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Lock } from 'lucide-react-native';
 import { Avatar } from './Avatar';
+import { DashButton } from './DashButton';
+import { colors, radius, spacing, typography } from '../theme';
 import type { Acquaintance } from '../types';
 
 interface Props {
   acquaintance: Acquaintance;
   onPress: () => void;
-  onIntroPress?: () => void;
   isPaid?: boolean;
 }
 
-export function AcquaintanceListItem({ acquaintance, onPress, onIntroPress, isPaid = false }: Props) {
+export function AcquaintanceListItem({ acquaintance, onPress, isPaid = false }: Props) {
+  const bio = acquaintance.bio ?? '';
+  const preview = bio.length > 22 ? bio.slice(0, 22) + '…' : bio;
+
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
-      <Avatar nickname={acquaintance.nickname} profileImageUrl={acquaintance.profileImageUrl} size={52} />
+    <View style={styles.row}>
+      <Avatar nickname={acquaintance.nickname} size={44} />
       <View style={styles.info}>
-        <Text style={styles.nickname}>{acquaintance.nickname}</Text>
+        <Text style={[typography.listItemName, { color: colors.text }]} numberOfLines={1}>
+          {acquaintance.nickname}
+        </Text>
+        {preview ? (
+          <Text style={[typography.hint, { color: colors.textFaint, marginTop: 2 }]} numberOfLines={1}>
+            {preview}
+          </Text>
+        ) : null}
       </View>
-      {isPaid && acquaintance.hasAcquaintances && (
-        <TouchableOpacity style={styles.introBtn} onPress={onIntroPress}>
-          <Text style={styles.introBtnText}>소개 보기</Text>
-        </TouchableOpacity>
-      )}
-    </TouchableOpacity>
+      <DashButton
+        title="소개 보기"
+        variant="primary"
+        size="sm"
+        onPress={onPress}
+        leading={isPaid ? undefined : <Lock size={12} color="#fff" />}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    gap: 14,
+    gap: spacing.md,
+    padding: spacing.md,
+    paddingHorizontal: 12,
+    marginHorizontal: spacing.lg,
+    marginVertical: 4,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bg,
   },
-  info: { flex: 1 },
-  nickname: { fontSize: 16, fontWeight: '600', color: '#1A1A1A' },
-  introBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    backgroundColor: '#FF4B6E',
-    borderRadius: 8,
-  },
-  introBtnText: { fontSize: 12, color: '#fff', fontWeight: '600' },
+  info: { flex: 1, minWidth: 0 },
 });

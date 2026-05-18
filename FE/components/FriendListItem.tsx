@@ -1,54 +1,54 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Avatar } from './Avatar';
+import { DashButton } from './DashButton';
+import { colors, radius, spacing, typography } from '../theme';
 import type { Friend } from '../types';
 
 interface Props {
   friend: Friend;
-  onPress: () => void;
   onProfilePress: () => void;
   onAcquaintancesPress: () => void;
 }
 
-export function FriendListItem({ friend, onPress, onProfilePress, onAcquaintancesPress }: Props) {
+export function FriendListItem({ friend, onProfilePress, onAcquaintancesPress }: Props) {
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
-      <Avatar nickname={friend.nickname} profileImageUrl={friend.profileImageUrl} size={52} />
+    <View style={styles.row}>
+      <Avatar nickname={friend.nickname} size={46} />
       <View style={styles.info}>
-        <Text style={styles.nickname}>{friend.nickname}</Text>
-        <View style={styles.buttons}>
-          <TouchableOpacity style={styles.btn} onPress={onProfilePress}>
-            <Text style={styles.btnText}>프로필 보기</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.btn} onPress={onAcquaintancesPress}>
-            <Text style={styles.btnText}>지인 목록</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={[typography.listItemName, { color: colors.text }]} numberOfLines={1}>
+          {friend.nickname}
+        </Text>
+        {friend.bio ? (
+          <Text style={styles.note} numberOfLines={1}>
+            {friend.bio}
+          </Text>
+        ) : null}
       </View>
-    </TouchableOpacity>
+      <View style={styles.actions}>
+        <DashButton title="프로필" variant="outline" size="sm" onPress={onProfilePress} />
+        <DashButton title="지인 목록" variant="primarySoft" size="sm" onPress={onAcquaintancesPress} />
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    gap: 14,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    marginHorizontal: spacing.lg,
+    borderRadius: radius.md,
+    gap: spacing.md,
   },
-  info: { flex: 1 },
-  nickname: { fontSize: 16, fontWeight: '600', color: '#1A1A1A', marginBottom: 8 },
-  buttons: { flexDirection: 'row', gap: 6 },
-  btn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: '#F8F8F8',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
+  info: { flex: 1, minWidth: 0 },
+  actions: { flexDirection: 'row', gap: 6, flexShrink: 0 },
+  note: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: colors.textFaint,
+    letterSpacing: -0.1,
+    marginTop: 3,
   },
-  btnText: { fontSize: 12, color: '#444', fontWeight: '500' },
 });

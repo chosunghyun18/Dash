@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAccessToken, useAuthStore } from '../stores/authStore';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080';
 
@@ -9,7 +10,10 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  // TODO: attach JWT token from storage
+  const token = getAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
@@ -17,7 +21,7 @@ api.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401) {
-      // TODO: handle token refresh
+      useAuthStore.getState().signOut();
     }
     return Promise.reject(error);
   }
