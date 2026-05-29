@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { View } from 'react-native';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -15,12 +15,15 @@ function AuthGate() {
   const bootstrap = useAuthStore((s) => s.bootstrap);
   const router = useRouter();
   const segments = useSegments();
+  const navState = useRootNavigationState();
 
   useEffect(() => {
     bootstrap();
   }, [bootstrap]);
 
   useEffect(() => {
+    if (!navState?.key) return;
+
     const inAuthRoute = segments[0] === 'login';
     const inInviteRoute = segments[0] === 'invite';
 
@@ -29,7 +32,7 @@ function AuthGate() {
     } else if (status === 'authenticated' && inAuthRoute) {
       router.replace('/(tabs)');
     }
-  }, [status, segments, router]);
+  }, [status, segments, router, navState?.key]);
 
   return null;
 }
