@@ -7,8 +7,8 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
-import { Heart, Check, Phone, Mail } from 'lucide-react-native';
+import { useLocalSearchParams, Stack, useRouter, type Href } from 'expo-router';
+import { Heart, Check, Phone, Mail, Crown } from 'lucide-react-native';
 import {
   useUserProfile,
   useSendContactRequest,
@@ -18,13 +18,22 @@ import {
 } from '../../hooks/useFriends';
 import { Avatar } from '../../components/Avatar';
 import { DashButton } from '../../components/DashButton';
-import { colors, radius, shadow, spacing, typography } from '../../theme';
+import { IntroPathPill } from '../../components/IntroPathPill';
+import { HopPill } from '../../components/HopIndicators';
+import { PlusBadge } from '../../components/PlusBadge';
+import { GradientBox } from '../../components/GradientBox';
+import { useMembershipStore, FREE_HOP_LIMIT } from '../../stores/membershipStore';
+import { colors, radius, shadow, spacing, typography, fontFamily } from '../../theme';
 
 type AcceptedInfo = { phone?: string; email?: string };
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { userId, requestId } = useLocalSearchParams<{ userId: string; requestId?: string }>();
+  const { userId, requestId, hop: hopParam, via: viaParam } =
+    useLocalSearchParams<{ userId: string; requestId?: string; hop?: string; via?: string }>();
+  const hop = hopParam ? Number(hopParam) : undefined;
+  const via = viaParam ? decodeURIComponent(viaParam) : undefined;
+  const isPlus = useMembershipStore((s) => s.plan === 'plus');
 
   const [acceptedInfo, setAcceptedInfo] = useState<AcceptedInfo | null>(null);
 
@@ -53,6 +62,10 @@ export default function ProfileScreen() {
     (sentForUser?.status === 'ACCEPTED'
       ? { phone: sentForUser.contactPhone, email: sentForUser.contactEmail }
       : null);
+
+  // 무료 회원이 3촌+ 프로필을 열람할 때 → 소개글 가림 + Plus 게이트
+  const showPlusGate = !!hop && !isPlus && hop > FREE_HOP_LIMIT && mode === 'normal';
+  const openPaywall = () => router.push('/upgrade' as Href);
 
   const handleContactRequest = () => {
     if (!profile) return;
@@ -134,9 +147,13 @@ export default function ProfileScreen() {
               <View style={[styles.avatarRing, shadow.heroAvatar]}>
                 <Avatar nickname={profile.nickname} size={120} />
               </View>
-              <Text style={[typography.profileName, { color: colors.text, marginTop: 14 }]}>
-                {profile.nickname}
-              </Text>
+              <View style={styles.nameRow}>
+                <Text style={[typography.profileName, { color: colors.text }]}>
+                  {profile.nickname}
+                </Text>
+                {hop ? <HopPill hop={hop} /> : null}
+              </View>
+              {via ? <IntroPathPill via={via} /> : null}
 
               {acceptedDisplay && mode === 'accepted' && (
                 <View style={styles.acceptedCard}>
@@ -164,10 +181,43 @@ export default function ProfileScreen() {
 
             <View style={styles.bioSection}>
               <Text style={styles.bioLabel}>나를 소개합니다</Text>
-              <Text style={[typography.body, { color: colors.text, marginTop: 10 }]}>
-                {profile.introText}
-              </Text>
+              {showPlusGate ? (
+                <View style={styles.bioMaskWrap}>
+                  {[0.95, 0.8, 0.6].map((w, i) => (
+                    <View key={i} style={[styles.maskLine, { width: `${w * 100}%` }]} />
+                  ))}
+                </View>
+              ) : (
+                <Text style={[typography.body, { color: colors.text, marginTop: 10 }]}>
+                  {profile.introText}
+                </Text>
+              )}
             </View>
+
+            {showPlusGate && (
+              <View style={styles.gateWrap}>
+                <GradientBox
+                  vertical
+                  colorsRange={[colors.plus.accentSoft, '#FFFFFF']}
+                  borderRadius={radius.lg}
+                  style={styles.gateBox}
+                >
+                  <PlusBadge variant="solid" size="sm" style={{ marginBottom: 10 }} />
+                  <Text style={styles.gateTitle}>{hop}촌 소개글은 Dash+ 전용이에요</Text>
+                  <Text style={styles.gateDesc}>
+                    업그레이드하면 소개글 전체를 보고{'\n'}바로 연락 요청까지 보낼 수 있어요.
+                  </Text>
+                  <DashButton
+                    title="Dash+ 시작하기"
+                    variant="primary"
+                    size="md"
+                    onPress={openPaywall}
+                    leading={<Crown size={14} color="#fff" fill="#fff" />}
+                    style={{ backgroundColor: colors.plus.accent, minWidth: 160 }}
+                  />
+                </GradientBox>
+              </View>
+            )}
           </ScrollView>
 
           <View style={styles.footer}>
@@ -208,6 +258,16 @@ export default function ProfileScreen() {
                 disabled
                 leading={<Check size={16} color={colors.textMuted} />}
               />
+            ) : showPlusGate ? (
+              <DashButton
+                title="Dash+로 연락 요청"
+                variant="primary"
+                size="lg"
+                block
+                onPress={openPaywall}
+                leading={<Crown size={16} color="#fff" fill="#fff" />}
+                style={{ backgroundColor: colors.plus.accent }}
+              />
             ) : (
               <DashButton
                 title={isSending ? '요청 중...' : '연락 요청하기'}
@@ -240,6 +300,33 @@ const styles = StyleSheet.create({
     padding: 4,
     backgroundColor: '#fff',
     borderRadius: 999,
+  },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14 },
+  bioMaskWrap: { marginTop: 12, gap: 9 },
+  maskLine: { height: 11, borderRadius: 6, backgroundColor: '#EAE6F2' },
+  gateWrap: { paddingHorizontal: spacing.xxl, paddingBottom: spacing.xxl },
+  gateBox: {
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: colors.plus.accentSoft,
+    alignItems: 'center',
+  },
+  gateTitle: {
+    fontFamily,
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+    letterSpacing: -0.3,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  gateDesc: {
+    ...typography.hint,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 14,
   },
   acceptedCard: {
     marginTop: spacing.xl,

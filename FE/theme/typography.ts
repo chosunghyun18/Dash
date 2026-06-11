@@ -20,7 +20,7 @@ export const typography = {
   badge: { fontFamily, fontSize: 11, fontWeight: '600', letterSpacing: -0.1, lineHeight: 15 } as T,
   tabLabel: { fontFamily, fontSize: 11, fontWeight: '500', letterSpacing: -0.3 } as T,
 
-  buttonLg: { fontFamily, fontSize: 15, fontWeight: '700', letterSpacing: -0.3 } as T,
-  buttonMd: { fontFamily, fontSize: 14, fontWeight: '600', letterSpacing: -0.3 } as T,
-  buttonSm: { fontFamily, fontSize: 12, fontWeight: '600', letterSpacing: -0.2 } as T,
+  buttonLg: { fontFamily, fontSize: 16, fontWeight: '600', letterSpacing: -0.2 } as T,
+  buttonMd: { fontFamily, fontSize: 14, fontWeight: '600', letterSpacing: -0.2 } as T,
+  buttonSm: { fontFamily, fontSize: 13, fontWeight: '600', letterSpacing: -0.2 } as T,
 };

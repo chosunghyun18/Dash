@@ -104,32 +104,32 @@ const MOCK_CONTACT_INFO: Record<number, { phone?: string; email?: string }> = {
 let MOCK_RECEIVED: ReceivedContactRequest[] = [
   {
     id: 1, requesterUserId: 201, requesterNickname: '정하은',
-    status: 'PENDING', createdAt: '2026-04-18T10:30:00Z',
+    status: 'PENDING', createdAt: '2026-04-18T10:30:00Z', via: '김민준의 소개',
   },
   {
     id: 2, requesterUserId: 204, requesterNickname: '오태양',
     status: 'ACCEPTED', createdAt: '2026-04-15T14:20:00Z',
-    contactPhone: '010-9876-5432',
+    contactPhone: '010-9876-5432', via: '이서연의 소개',
   },
   {
     id: 3, requesterUserId: 206, requesterNickname: '임도현',
-    status: 'REJECTED', createdAt: '2026-04-12T09:00:00Z',
+    status: 'REJECTED', createdAt: '2026-04-12T09:00:00Z', via: '박지현의 소개',
   },
 ];
 
 const MOCK_SENT: ContactRequest[] = [
   {
     id: 4, targetUserId: 202, targetNickname: '윤서진',
-    status: 'PENDING', createdAt: '2026-04-17T09:00:00Z',
+    status: 'PENDING', createdAt: '2026-04-17T09:00:00Z', via: '김민준을 통해',
   },
   {
     id: 5, targetUserId: 103, targetNickname: '박지현',
     status: 'ACCEPTED', createdAt: '2026-04-10T16:45:00Z',
-    contactEmail: 'jh.park@example.com',
+    contactEmail: 'jh.park@example.com', via: '최준호를 통해',
   },
   {
     id: 6, targetUserId: 105, targetNickname: '강수빈',
-    status: 'REJECTED', createdAt: '2026-04-08T11:00:00Z',
+    status: 'REJECTED', createdAt: '2026-04-08T11:00:00Z', via: '강수빈을 통해',
   },
 ];
 
@@ -147,8 +147,16 @@ export const friendService = {
     return api.get<Friend[]>('/api/v1/friends').then(r => r.data);
   },
 
+  // 특정 노드(친구 또는 더 깊은 지인)의 지인 목록.
+  // 인스타 팔로우식 무한 hop 네트워크 — 화면에서 trail 길이로 촌수를 계산한다.
+  // 각 항목에 acquaintanceCount(그 사람의 지인 수)를 채워 드릴다운에 사용.
   getAcquaintances: async (userId: number): Promise<Acquaintance[]> => {
-    if (USE_MOCK) return MOCK_ACQUAINTANCES[userId] ?? [];
+    if (USE_MOCK) {
+      return (MOCK_ACQUAINTANCES[userId] ?? []).map<Acquaintance>(a => ({
+        ...a,
+        acquaintanceCount: (MOCK_ACQUAINTANCES[a.userId] ?? []).length,
+      }));
+    }
     return api.get<Acquaintance[]>(`/api/v1/users/${userId}/acquaintances`).then(r => r.data);
   },
 

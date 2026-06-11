@@ -18,16 +18,16 @@ interface Props {
 }
 
 const HEIGHT: Record<Size, number> = { sm: 32, md: 40, lg: 52 };
-const PAD_H: Record<Size, number> = { sm: 12, md: 14, lg: 18 };
+const PAD_H: Record<Size, number> = { sm: 12, md: 16, lg: 20 };
 
 const VARIANT_STYLE: Record<Variant, { bg: string; fg: string; border?: string }> = {
   primary: { bg: colors.primary, fg: '#fff' },
-  primarySoft: { bg: colors.primarySoft, fg: colors.primary, border: colors.primarySoft },
-  secondary: { bg: colors.bgSoft, fg: colors.textMuted, border: colors.border },
-  outline: { bg: 'transparent', fg: colors.text, border: colors.border },
-  reject: { bg: colors.reject, fg: colors.rejectText, border: colors.border },
+  primarySoft: { bg: colors.primarySoft, fg: colors.primary },
+  secondary: { bg: '#F5F5F5', fg: '#333' },
+  outline: { bg: '#fff', fg: colors.text, border: colors.border },
+  reject: { bg: colors.reject, fg: colors.rejectText },
   accept: { bg: colors.accept, fg: '#fff' },
-  ghost: { bg: 'transparent', fg: colors.textMuted },
+  ghost: { bg: 'transparent', fg: colors.primary },
 };
 
 export function DashButton({

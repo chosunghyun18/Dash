@@ -23,8 +23,9 @@ export const colors = {
   avatarPalette: ['#FF4B6E', '#FF7A45', '#FFAA00', '#52C41A', '#1890FF', '#7B5CFA'],
 
   plus: {
-    accent: '#7C4DFF',
-    gradientStart: '#7C4DFF',
+    accent: '#7B5CFA',
+    accentSoft: '#F4F0FF',
+    gradientStart: '#7B5CFA',
     gradientEnd: '#9B7EFF',
     lockOverlay: 'rgba(255,255,255,0.55)',
   },

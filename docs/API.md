@@ -146,6 +146,30 @@
 
 ---
 
+## Dash+ 유료 멤버십 (FE 반영 완료 · BE 미구현)
+
+> 무한 hop 지인 네트워크. 무료는 2촌까지(`FREE_HOP_LIMIT=2`), 3촌+는 Dash+ 전용.
+> FE 결정: `memory/adr/ADR-FE-002-dash-plus-membership.md`
+
+| 메서드 | 엔드포인트 | 설명 | 비고 |
+|--------|-----------|------|------|
+| GET | `/api/v1/users/{userId}/acquaintances` | 노드별 지인 목록 | 항목에 `acquaintanceCount`(드릴다운용) 포함 |
+| GET | `/api/v1/users/me/membership` | 내 멤버십 상태 | `{ plan: 'free'\|'plus', plusUntil? }` |
+| POST | `/api/v1/billing/plus/checkout` | Dash+ 구독 결제 | 연/월 플랜 · 결제 연동 TBD |
+
+```typescript
+// Acquaintance (drill-down 지원 필드)
+{ id, userId, nickname, profileImageUrl, hasAcquaintances, bio?, acquaintanceCount? }
+
+// Membership
+{ plan: 'free' | 'plus', plusUntil?: ISODate }
+```
+
+3촌+ 게이팅은 현재 FE 클라이언트에서 처리. 서버측 권한 검증(예: hop>2 요청 시 403 +
+미리보기 카운트) 도입 시 위 응답에 hop/via 메타 추가 권장.
+
+---
+
 ## 구현 우선순위
 
 | 우선순위 | 도메인 | API |
@@ -156,3 +180,4 @@
 | 🔴 필수 | 유저 프로필 | GET `/users/{userId}/profile` |
 | 🔴 필수 | 연락 요청 | POST/GET/accept/reject |
 | 🟡 선택 | 인증 | signup, login, refresh |
+| 🟢 추후 | Dash+ | membership, billing/plus/checkout |

@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
+import { Home, User } from 'lucide-react-native';
 import { colors, fontFamily } from '../../theme';
 
 export default function TabLayout() {
@@ -23,8 +24,24 @@ export default function TabLayout() {
         },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: '홈' }} />
-      <Tabs.Screen name="mypage" options={{ title: '마이페이지' }} />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: '홈',
+          tabBarIcon: ({ focused, color }) => (
+            <Home size={24} color={color} fill={focused ? color : 'transparent'} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="mypage"
+        options={{
+          title: '마이페이지',
+          tabBarIcon: ({ focused, color }) => (
+            <User size={24} color={color} fill={focused ? color : 'transparent'} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

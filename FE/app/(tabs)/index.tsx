@@ -60,7 +60,10 @@ export default function HomeScreen() {
           <FriendListItem
             friend={item}
             onProfilePress={() => router.push(`/profile/${item.userId}`)}
-            onAcquaintancesPress={() => router.push(`/acquaintances/${item.userId}`)}
+            onAcquaintancesPress={() => {
+              const trail = JSON.stringify([{ id: String(item.userId), name: item.nickname }]);
+              router.push(`/acquaintances/${item.userId}?trail=${encodeURIComponent(trail)}`);
+            }}
           />
         )}
         ItemSeparatorComponent={() => <View style={{ height: 4 }} />}
