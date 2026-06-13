@@ -1,6 +1,6 @@
 # Frontend Codemap
 
-**Last Updated:** 2026-06-11
+**Last Updated:** 2026-06-13
 **Stack:** React Native · Expo Router · TypeScript · Zustand · React Query · react-native-svg
 
 ## Architecture (레이어드)
@@ -8,11 +8,14 @@
 ```
 Presentation   app/ (screens) · components/
 Application    hooks/ · stores/
-Data           services/ (axios)
-Infrastructure services/storage (MMKV) · theme/ (tokens)
+Data           services/ (axios) · mocks/ (개발 모드 mock)
+Infrastructure lib/ (storage·trail) · theme/ (tokens) · config.ts
 ```
 
 의존성 방향: Presentation → Application → Data → Infrastructure (ADR-FE-001)
+
+**개발/운영 모드:** `config.ts` 의 `USE_MOCK`(`EXPO_PUBLIC_USE_MOCK`)이 true 면
+services 가 `mocks/index.ts` 반환, false(기본)면 BE API 호출.
 
 ## Screens (app/)
 
@@ -42,6 +45,7 @@ Infrastructure services/storage (MMKV) · theme/ (tokens)
 | `StatusBadge` | PENDING/ACCEPTED/REJECTED 상태 칩 |
 | `IntroPathPill` | "♡ 민수의 소개" 소개 경로 핀 |
 | `EmptyState` | 빈 상태 (heart/inbox 아이콘 + CTA) |
+| `ScreenLoader` | 화면 전체 중앙정렬 로딩 인디케이터 (공통) |
 | **`PlusBadge`** | Dash+ 배지 (크라운 + "Plus", solid/soft, xs/sm/md) |
 | **`PlusUpgradeCard`** | 마이페이지 Dash+ 카드 (무료=업셀 / 활성=결제일) |
 | **`HopIndicators`** | `HopPill`(촌수) + `HopBreadcrumb`(나 › 민수 › …) |
@@ -57,13 +61,22 @@ Infrastructure services/storage (MMKV) · theme/ (tokens)
 
 ## Data (services/ · hooks/)
 
-| 서비스 | 책임 | 훅 (useFriends) |
-|--------|------|------------------|
-| `friend` | 친구·지인·요청·내프로필 (USE_MOCK 토글) | useMyFriends, useAcquaintances, useUserProfile, useSent/ReceivedRequests, useSend/Accept/RejectContactRequest, useMyProfile, useUpdateMyProfile, useCheckNickname |
-| `auth` | Apple/Google 로그인 | (authStore) |
-| `invitation` | 초대 생성·수락 | useInvite |
-| `storage` | MMKV 보안 저장 | — |
+| 서비스 | 책임 | 훅 |
+|--------|------|------|
+| `friend` | 친구·지인·요청·내프로필 (config.USE_MOCK 토글) | `useFriends`: useMyFriends, useAcquaintances, useUserProfile, useSent/ReceivedRequests, useSend/Accept/RejectContactRequest, useMyProfile, useUpdateMyProfile, useCheckNickname |
+| `auth` | Apple/Google 로그인 | `useAuth`: useSocialLogin (세션 저장·라우팅 포함) |
+| `invitation` | 초대 생성·검증·수락 | `useInvite`: useCreateInvitation, useShareInvitation, useMyInvitations, useValidateInvitation, useAcceptInvitation |
 | `api` | axios 인스턴스 + JWT 인터셉터 | — |
+
+`mocks/index.ts` — 개발 모드 mock 데이터 + 구현(`friendMocks`·`authMocks`) 통합 (Data 보조)
+
+## Infrastructure (lib/)
+
+| 모듈 | 책임 |
+|------|------|
+| `lib/storage` | MMKV 보안 저장 (Expo Go/웹은 메모리 폴백) + `STORAGE_KEYS` |
+| `lib/trail` | 지인 trail 인코딩/파싱 (`encodeTrail`·`trailFromNode`·`appendTrail`·`parseTrail`) |
+| `config.ts` | `USE_MOCK` 전역 토글 (`EXPO_PUBLIC_USE_MOCK`) |
 
 ## Dash+ 무한 hop 모델 (핵심)
 

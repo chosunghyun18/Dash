@@ -28,11 +28,14 @@ Controller → Service → Repository → Domain
 
 ```
 app/          Expo Router 페이지 (login, (tabs), profile, acquaintances, invite, upgrade)
-services/     API 호출 (axios) — friend, auth, invitation, storage
-hooks/        React Query 훅 + 디바이스 훅
+services/     API 호출 (axios) — friend, auth, invitation, api
+mocks/        개발 모드 mock 데이터 + 구현 (config.USE_MOCK 토글)
+hooks/        React Query 훅 + 디바이스 훅 (useFriends, useAuth, useInvite …)
 stores/       Zustand 전역 상태 (authStore, membershipStore)
 components/   재사용 UI 컴포넌트
+lib/          Infrastructure — storage(MMKV), trail 유틸
 theme/        색상·타이포·간격 토큰
+config.ts     USE_MOCK 전역 토글 (EXPO_PUBLIC_USE_MOCK)
 ```
 
 ## Dash+ 유료 멤버십 (FE)

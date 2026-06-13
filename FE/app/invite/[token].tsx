@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery, useMutation } from '@tanstack/react-query';
 import { Check } from 'lucide-react-native';
-import { invitationService } from '../../services/invitation';
+import { useValidateInvitation, useAcceptInvitation } from '../../hooks/useInvite';
 import { useAuthStore } from '../../stores/authStore';
 import { DashMark } from '../../components/DashMark';
 import { DashButton } from '../../components/DashButton';
@@ -18,29 +17,20 @@ export default function InviteAcceptScreen() {
   const status = useAuthStore((s) => s.status);
   const [accepted, setAccepted] = useState(false);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['invitation', 'validate', token],
-    queryFn: () => invitationService.validate(String(token)),
-    enabled: !!token,
-    retry: false,
-  });
+  const { data, isLoading, error } = useValidateInvitation(String(token));
 
-  const acceptMutation = useMutation({
-    mutationFn: () => invitationService.accept(String(token)),
-    onSuccess: () => {
-      setAccepted(true);
-    },
-    onError: () => {
-      Alert.alert('오류', '초대를 수락하지 못했어요. 잠시 후 다시 시도해주세요.');
-    },
-  });
+  const acceptMutation = useAcceptInvitation(String(token));
 
   const handleAccept = () => {
     if (status !== 'authenticated') {
       router.replace('/login');
       return;
     }
-    acceptMutation.mutate();
+    acceptMutation.mutate(undefined, {
+      onSuccess: () => setAccepted(true),
+      onError: () =>
+        Alert.alert('오류', '초대를 수락하지 못했어요. 잠시 후 다시 시도해주세요.'),
+    });
   };
 
   return (

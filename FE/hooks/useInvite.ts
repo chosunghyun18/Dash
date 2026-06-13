@@ -46,3 +46,18 @@ export function useMyInvitations() {
     queryFn: invitationService.getMyInvitations,
   });
 }
+
+export function useValidateInvitation(token: string) {
+  return useQuery({
+    queryKey: ['invitation', 'validate', token],
+    queryFn: () => invitationService.validate(token),
+    enabled: !!token,
+    retry: false,
+  });
+}
+
+export function useAcceptInvitation(token: string) {
+  return useMutation({
+    mutationFn: () => invitationService.accept(token),
+  });
+}

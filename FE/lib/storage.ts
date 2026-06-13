@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 
 interface SecureStorage {
@@ -30,8 +31,10 @@ function createMmkvStorage(): SecureStorage {
   });
 }
 
+// Expo Go(StoreClient)와 웹은 react-native-mmkv 네이티브 모듈을 쓸 수 없으므로
+// 메모리 셰임으로 폴백. 네이티브 dev/release 빌드에서만 MMKV 사용.
 export const secureStorage: SecureStorage =
-  Constants.executionEnvironment === ExecutionEnvironment.StoreClient
+  Platform.OS === 'web' || Constants.executionEnvironment === ExecutionEnvironment.StoreClient
     ? createMemoryStorage()
     : createMmkvStorage();
 

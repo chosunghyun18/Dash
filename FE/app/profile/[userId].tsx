@@ -5,7 +5,6 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter, type Href } from 'expo-router';
 import { Heart, Check, Phone, Mail, Crown } from 'lucide-react-native';
@@ -22,6 +21,7 @@ import { IntroPathPill } from '../../components/IntroPathPill';
 import { HopPill } from '../../components/HopIndicators';
 import { PlusBadge } from '../../components/PlusBadge';
 import { GradientBox } from '../../components/GradientBox';
+import { ScreenLoader } from '../../components/ScreenLoader';
 import { useMembershipStore, FREE_HOP_LIMIT } from '../../stores/membershipStore';
 import { colors, radius, shadow, spacing, typography, fontFamily } from '../../theme';
 
@@ -131,9 +131,7 @@ export default function ProfileScreen() {
         }}
       />
       {isLoading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.primary} size="large" />
-        </View>
+        <ScreenLoader />
       ) : !profile ? (
         <View style={styles.center}>
           <Text style={[typography.caption, { color: colors.textFaint }]}>

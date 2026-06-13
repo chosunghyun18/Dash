@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   View,
   Text,
@@ -8,73 +7,25 @@ import {
   ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import { Lock } from 'lucide-react-native';
 import { DashMark } from '../components/DashMark';
 import { SocialAuthButton } from '../components/SocialAuthButton';
-import { authService } from '../services/auth';
-import { useAuthStore } from '../stores/authStore';
+import { useSocialLogin } from '../hooks/useAuth';
 import { colors, typography } from '../theme';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
-  const startAuthenticating = useAuthStore((s) => s.startAuthenticating);
-  const setSession = useAuthStore((s) => s.setSession);
-  const cancelAuthenticating = useAuthStore((s) => s.cancelAuthenticating);
-
-  const [appleLoading, setAppleLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const { loginWithApple, loginWithGoogle, appleLoading, googleLoading } = useSocialLogin();
 
   const handleApple = async () => {
-    try {
-      setAppleLoading(true);
-      startAuthenticating('apple');
-      const res = await authService.loginWithApple({
-        identityToken: 'mock-identity-token',
-        authorizationCode: 'mock-auth-code',
-      });
-      setSession({
-        accessToken: res.accessToken,
-        refreshToken: res.refreshToken,
-        userId: res.userId,
-        provider: 'apple',
-      });
-      if (res.isNewUser) {
-        router.replace('/profile/edit');
-      } else {
-        router.replace('/(tabs)');
-      }
-    } catch {
-      cancelAuthenticating();
-      Alert.alert('연결 실패', '연결에 실패했어요. 다시 시도해주세요.');
-    } finally {
-      setAppleLoading(false);
-    }
+    const ok = await loginWithApple();
+    if (!ok) Alert.alert('연결 실패', '연결에 실패했어요. 다시 시도해주세요.');
   };
 
   const handleGoogle = async () => {
-    try {
-      setGoogleLoading(true);
-      startAuthenticating('google');
-      const res = await authService.loginWithGoogle({ idToken: 'mock-google-id-token' });
-      setSession({
-        accessToken: res.accessToken,
-        refreshToken: res.refreshToken,
-        userId: res.userId,
-        provider: 'google',
-      });
-      if (res.isNewUser) {
-        router.replace('/profile/edit');
-      } else {
-        router.replace('/(tabs)');
-      }
-    } catch {
-      cancelAuthenticating();
-      Alert.alert('연결 실패', '연결에 실패했어요. 다시 시도해주세요.');
-    } finally {
-      setGoogleLoading(false);
-    }
+    const ok = await loginWithGoogle();
+    if (!ok) Alert.alert('연결 실패', '연결에 실패했어요. 다시 시도해주세요.');
   };
 
   const buttons =

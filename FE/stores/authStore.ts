@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { secureStorage, STORAGE_KEYS } from '../services/storage';
+import { secureStorage, STORAGE_KEYS } from '../lib/storage';
 
 export type AuthProvider = 'apple' | 'google';
 export type AuthStatus = 'unauthenticated' | 'authenticating' | 'authenticated';

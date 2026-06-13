@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { View, FlatList, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, FlatList, Text, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, type Href } from 'expo-router';
 import { Sparkles } from 'lucide-react-native';
 import { useAcquaintances, useReceivedRequests, useUserProfile } from '../../hooks/useFriends';
@@ -7,20 +7,11 @@ import { useMembershipStore, FREE_HOP_LIMIT } from '../../stores/membershipStore
 import { ConnectionCard } from '../../components/ConnectionCard';
 import { LockedHopGate } from '../../components/LockedHopGate';
 import { EmptyState } from '../../components/EmptyState';
+import { ScreenLoader } from '../../components/ScreenLoader';
 import { HopPill, HopBreadcrumb, TrailNode } from '../../components/HopIndicators';
 import { Avatar } from '../../components/Avatar';
+import { parseTrail, appendTrail } from '../../lib/trail';
 import { colors, radius, spacing, typography } from '../../theme';
-
-function parseTrail(raw?: string): TrailNode[] {
-  if (!raw) return [];
-  try {
-    const arr = JSON.parse(raw);
-    if (Array.isArray(arr)) return arr.filter((n) => n && n.id && n.name);
-  } catch {
-    /* ignore */
-  }
-  return [];
-}
 
 export default function AcquaintancesScreen() {
   const { userId, trail: trailParam } = useLocalSearchParams<{ userId: string; trail?: string }>();
@@ -60,9 +51,8 @@ export default function AcquaintancesScreen() {
   };
 
   const drillDown = (person: { userId: number; nickname: string }) => {
-    const nextTrail = [...trail, { id: String(person.userId), name: person.nickname }];
     router.push(
-      `/acquaintances/${person.userId}?trail=${encodeURIComponent(JSON.stringify(nextTrail))}` as Href
+      `/acquaintances/${person.userId}?trail=${appendTrail(trail, person.userId, person.nickname)}` as Href
     );
   };
 
@@ -81,9 +71,7 @@ export default function AcquaintancesScreen() {
       />
       <View style={styles.container}>
         {isLoading ? (
-          <View style={styles.center}>
-            <ActivityIndicator color={colors.primary} size="large" />
-          </View>
+          <ScreenLoader />
         ) : (
           <FlatList
             data={locked ? [] : list}
@@ -163,7 +151,6 @@ export default function AcquaintancesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   breadcrumb: {
     paddingTop: spacing.lg,
     paddingBottom: spacing.xs,

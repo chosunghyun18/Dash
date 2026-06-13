@@ -15,6 +15,7 @@ import { Stack, useRouter } from 'expo-router';
 import { Phone, Mail, Check, X } from 'lucide-react-native';
 import { useMyProfile, useUpdateMyProfile, useCheckNickname } from '../../hooks/useFriends';
 import { DashButton } from '../../components/DashButton';
+import { ScreenLoader } from '../../components/ScreenLoader';
 import { colors, radius, spacing, typography } from '../../theme';
 
 type ContactType = 'phone' | 'email';
@@ -106,11 +107,7 @@ export default function ProfileEditScreen() {
   };
 
   if (isProfileLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator color={colors.primary} size="large" />
-      </View>
-    );
+    return <ScreenLoader />;
   }
 
   const counterColor = introText.length > 450 ? '#D46B08' : colors.textFaint;
@@ -270,7 +267,6 @@ function ContactToggle({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   content: { padding: spacing.xxl, paddingBottom: 60 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
   field: { marginBottom: 24 },
   label: { ...typography.caption, color: colors.text, fontWeight: '700', marginBottom: 8 },
   row: { flexDirection: 'row', gap: spacing.xs, alignItems: 'center' },

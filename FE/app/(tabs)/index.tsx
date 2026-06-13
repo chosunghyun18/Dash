@@ -1,11 +1,13 @@
-import { View, FlatList, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, FlatList, Text, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Heart, Lock, Plus } from 'lucide-react-native';
 import { useMyFriends, useMyProfile } from '../../hooks/useFriends';
 import { FriendListItem } from '../../components/FriendListItem';
 import { DashButton } from '../../components/DashButton';
+import { ScreenLoader } from '../../components/ScreenLoader';
 import { useCreateInvitation, useShareInvitation } from '../../hooks/useInvite';
+import { trailFromNode } from '../../lib/trail';
 import { colors, spacing, typography } from '../../theme';
 
 export default function HomeScreen() {
@@ -27,11 +29,7 @@ export default function HomeScreen() {
   };
 
   if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator color={colors.primary} size="large" />
-      </View>
-    );
+    return <ScreenLoader />;
   }
 
   const count = friends?.length ?? 0;
@@ -60,10 +58,9 @@ export default function HomeScreen() {
           <FriendListItem
             friend={item}
             onProfilePress={() => router.push(`/profile/${item.userId}`)}
-            onAcquaintancesPress={() => {
-              const trail = JSON.stringify([{ id: String(item.userId), name: item.nickname }]);
-              router.push(`/acquaintances/${item.userId}?trail=${encodeURIComponent(trail)}`);
-            }}
+            onAcquaintancesPress={() =>
+              router.push(`/acquaintances/${item.userId}?trail=${trailFromNode(item.userId, item.nickname)}`)
+            }
           />
         )}
         ItemSeparatorComponent={() => <View style={{ height: 4 }} />}
@@ -102,7 +99,6 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: {
     paddingHorizontal: spacing.xxl,
     paddingBottom: spacing.lg,
