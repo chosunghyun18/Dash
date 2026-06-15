@@ -23,26 +23,35 @@ dash/
 
 ## 아키텍처
 
-### BE — 레이어드 아키텍처 (Layered Architecture)
+### BE — 헥사고날 (Ports & Adapters) + DDD
+
+> ADR: `memory/adr/ADR-BE-002-hexagonal-architecture.md` (ADR-BE-001 레이어드를 대체)
+
+바운디드 컨텍스트별 4개 서브패키지 (`com.dash.<context>/`):
 
 ```
-┌──────────────────────────────────┐
-│  Presentation  Controller / DTO  │
-├──────────────────────────────────┤
-│  Business      Service / Validator│
-├──────────────────────────────────┤
-│  Persistence   Repository / Entity│
-├──────────────────────────────────┤
-│  Domain        Model / VO (순수 Java)  │
-└──────────────────────────────────┘
+┌───────────────────────────────────────────────┐
+│  presentation    Controller / DTO              │
+├───────────────────────────────────────────────┤
+│  application     UseCase Service (@Transactional)│
+├───────────────────────────────────────────────┤
+│  domain          애그리거트 / VO / Repository 포트  │ ← 순수 Java, 프레임워크 의존 0
+├───────────────────────────────────────────────┤
+│  infrastructure  JpaEntity / Adapter / Mapper   │ ← 포트 구현
+└───────────────────────────────────────────────┘
+       presentation → application → domain ← infrastructure(adapter)
 ```
 
 **핵심 규칙:**
-- 의존성 방향: Presentation → Business → Persistence, 모두 Domain 참조
-- Domain에 Spring/JPA 어노테이션 절대 금지
-- Controller → Repository 직접 호출 금지
+- **Domain에 Spring/JPA 어노테이션 절대 금지** (이번엔 실제 강제 — domain 패키지에 `jakarta.persistence`/`org.springframework` import 0)
+- **Repository 포트는 domain 소유**, 어댑터가 infrastructure에서 Spring Data + 매퍼로 구현
+- **애그리거트 간 참조는 ID/VO로** (`MemberId`). JpaEntity는 FK를 Long 컬럼으로 매핑 (JOIN FETCH 금지)
+- 도메인 팩토리 `create`(신규)/`reconstitute`(복원) 구분. 변경 후 application이 명시적 `repository.save()`
+- OOP/VO 적극 활용: `Nickname`, `Contact`(phone XOR email), `InvitationToken`
+- Controller → Repository 직접 호출 금지 (controller → application service)
 - 모든 사용자 엔드포인트에 `@PreAuthorize` 필수
 - DB 쓰기 작업에 `@Transactional` 필수
+- 읽기 조합(user)은 CQRS read — application query service가 여러 포트 조합
 
 ### FE — 레이어드 아키텍처
 

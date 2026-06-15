@@ -35,12 +35,16 @@
 
 ## 공통 규약 (모든 기능 공통)
 
-- **레이어:** Controller → Service → Repository → Domain
+> **아키텍처: 헥사고날(Ports & Adapters) + DDD** — ADR-BE-002. 컨텍스트별 `{domain, application, infrastructure/persistence, presentation}`.
+
+- **레이어:** presentation → application → domain ← infrastructure(adapter)
+- **도메인:** 순수 Java(프레임워크 의존 0). 애그리거트는 `create`(신규)/`reconstitute`(복원) 팩토리. VO(`MemberId`, `Nickname`, `Contact`, `InvitationToken`)로 불변식 캡슐화
+- **포트/어댑터:** Repository 인터페이스는 `domain/`, 구현은 `infrastructure/persistence/XxxRepositoryAdapter`(Spring Data + Mapper)
+- **JpaEntity:** `infrastructure/persistence/XxxJpaEntity`(@Entity)가 도메인과 분리. 애그리거트 간 참조는 FK Long 컬럼(JOIN FETCH 없음)
 - **인증:** `@PreAuthorize("isAuthenticated()")` + `@AuthenticationPrincipal UserDetails user` → `Long.parseLong(user.getUsername())` = memberId
-- **DTO:** Java `record` + static `of(...)` 팩토리. 요청 DTO는 Bean Validation 어노테이션.
-- **예외:** `throw new BusinessException(ErrorCode.XXX)` → `GlobalExceptionHandler` 가 status + `{code, message}` 변환
-- **트랜잭션:** 서비스 클래스 `@Transactional(readOnly=true)` 기본, 쓰기 메서드만 `@Transactional`
-- **엔티티:** `@Entity` + Lombok `@Getter` + `@NoArgsConstructor(PROTECTED)` + static 팩토리, setter 금지
+- **DTO:** presentation `record` + static `of(...)` 팩토리. 요청 DTO는 Bean Validation
+- **예외:** `throw new BusinessException(ErrorCode.XXX)` → `GlobalExceptionHandler` (공유 커널)
+- **트랜잭션:** application 서비스 `@Transactional(readOnly=true)` 기본, 쓰기 메서드만 `@Transactional`. 도메인 변경 후 **명시적 `repository.save()`**
 
 ## 관련 명세 문서 (docs/)
 

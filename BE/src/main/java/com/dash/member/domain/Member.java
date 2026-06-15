@@ -1,70 +1,47 @@
 package com.dash.member.domain;
 
-import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
-@Entity
-@Table(name = "members")
+/**
+ * 회원 애그리거트 루트 (순수 도메인 — 프레임워크 의존 없음).
+ * 식별자는 {@link MemberId}, 표시 이름은 {@link Nickname} VO 로 표현한다.
+ * 영속 타임스탬프(createdAt/updatedAt)는 인프라(JpaEntity) 관심사이므로 도메인에 두지 않는다.
+ */
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private final MemberId id;        // 신규 생성 시 null
+    private final String kakaoId;
+    private Nickname nickname;
+    private final Gender gender;
+    private final Integer birthYear;
+    private final MemberStatus status;
+    private final String country;
 
-    @Column(nullable = false, unique = true)
-    private String kakaoId;
-
-    @Column(nullable = false, length = 50)
-    private String nickname;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
-    private Gender gender;
-
-    private Integer birthYear;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private MemberStatus status;
-
-    @Column(nullable = false, length = 10)
-    private String country;
-
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    public void changeNickname(String nickname) {
+    private Member(MemberId id, String kakaoId, Nickname nickname, Gender gender,
+                   Integer birthYear, MemberStatus status, String country) {
+        this.id = id;
+        this.kakaoId = kakaoId;
         this.nickname = nickname;
+        this.gender = gender;
+        this.birthYear = birthYear;
+        this.status = status;
+        this.country = country;
     }
 
-    public static Member create(String kakaoId, String nickname, Gender gender,
+    /** 신규 회원 생성. */
+    public static Member create(String kakaoId, Nickname nickname, Gender gender,
                                 Integer birthYear, String country) {
-        Member member = new Member();
-        member.kakaoId = kakaoId;
-        member.nickname = nickname;
-        member.gender = gender;
-        member.birthYear = birthYear;
-        member.country = country;
-        member.status = MemberStatus.ACTIVE;
-        return member;
+        return new Member(null, kakaoId, nickname, gender, birthYear, MemberStatus.ACTIVE, country);
+    }
+
+    /** 영속 데이터로부터 복원. */
+    public static Member reconstitute(MemberId id, String kakaoId, Nickname nickname, Gender gender,
+                                      Integer birthYear, MemberStatus status, String country) {
+        return new Member(id, kakaoId, nickname, gender, birthYear, status, country);
+    }
+
+    public void changeNickname(Nickname nickname) {
+        this.nickname = nickname;
     }
 }

@@ -16,27 +16,31 @@ date: 2026-06-11
 | 인증 | JWT (access 24h + refresh 7d) |
 | 상태관리 | Zustand + React Query |
 
-## BE 레이어 구조
+## BE 아키텍처 — 헥사고날(Ports & Adapters) + DDD
+
+> ADR: `adr/ADR-BE-002-hexagonal-architecture.md` (ADR-BE-001 레이어드 대체)
 
 ```
-Controller → Service → Repository → Domain
+presentation → application → domain ← infrastructure(adapter)
 ```
-- DTO ↔ Domain 변환은 Service 레이어 (DTO는 record + static `of` 팩토리)
-- 컨트롤러 공통: `@PreAuthorize("isAuthenticated()")` + `@AuthenticationPrincipal` → memberId
-- 엔티티는 JPA 어노테이션 사용(`@Entity`), Lombok `@Getter`/`@NoArgsConstructor(PROTECTED)` + static 팩토리
+- **domain**: 애그리거트·VO·Repository 포트. 순수 Java(프레임워크 의존 0). `create`/`reconstitute` 팩토리
+- **application**: 유스케이스 서비스, `@Transactional`, 포트에만 의존. 변경 후 명시적 `save()`
+- **infrastructure/persistence**: `XxxJpaEntity`(@Entity)·Spring Data·Mapper·RepositoryAdapter(포트 구현). 애그리거트 간 참조는 FK Long 컬럼(JOIN FETCH 없음)
+- **presentation**: Controller·DTO(record + static `of`). `@PreAuthorize` + `@AuthenticationPrincipal` → memberId
+- VO: `MemberId`(정렬), `Nickname`(1~12자), `Contact`(phone XOR email), `InvitationToken`
 
-### BE 패키지 (`com.dash`)
+### BE 패키지 (`com.dash.<context>/{domain,application,infrastructure,presentation}`)
 
 ```
-member/        회원 엔티티/리포지토리 (kakaoId 기반)
-profile/       내 프로필 — GET/PUT /me/profile, nickname-check
-friendship/    친구 관계·친구 목록 — GET /friends
-user/          타 유저 프로필·지인 탐색 — GET /users/{id}/profile, /acquaintances
-contactrequest/ 연락 요청 — POST/GET sent·received/accept/reject
-invitation/    친구 초대 링크
-global/        보안(JWT)·예외(BusinessException/ErrorCode)·Swagger
+member/        회원 (kakaoId 기반) — 잎 애그리거트, MemberId/Nickname VO
+profile/       내 프로필 — /me/profile, nickname-check. Contact VO
+friendship/    친구 관계·친구 목록 — /friends
+user/          타 유저 프로필·지인 탐색 — /users/{id}/profile, /acquaintances (CQRS read, domain 없음)
+contactrequest/ 연락 요청 — /contact-requests/*
+invitation/    친구 초대 링크 — /invitations/*. InvitationToken VO
+global/        보안(JWT)·예외(BusinessException/ErrorCode = 공유 커널)·Swagger
 ```
-> 상세 엔드포인트 맵: `docs/CODEMAPS/backend.md`
+> 상세 엔드포인트 맵: `docs/CODEMAPS/backend.md` · BE 문서 허브: `docs/BE/INDEX.md`
 
 ### 인증 보류 (미구현)
 - `Member`는 `kakaoId` 모델인데 API.md는 email/password, FE는 Apple/Google 가정 — 3자 충돌로 auth 엔드포인트 보류.

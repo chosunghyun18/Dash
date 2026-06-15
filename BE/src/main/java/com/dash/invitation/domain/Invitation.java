@@ -2,67 +2,64 @@ package com.dash.invitation.domain;
 
 import com.dash.global.exception.BusinessException;
 import com.dash.global.exception.ErrorCode;
-import com.dash.member.domain.Member;
-import jakarta.persistence.*;
-import lombok.AccessLevel;
+import com.dash.member.domain.MemberId;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "invitations")
+/**
+ * 초대 애그리거트 루트 (순수 도메인). inviter/invitee 는 {@link MemberId} 로 참조한다.
+ * 상태 전이(수락/만료) 불변식을 도메인이 강제한다.
+ */
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Invitation {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private static final int EXPIRY_DAYS = 7;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "inviter_id", nullable = false)
-    private Member inviter;
-
-    @Column(nullable = false, unique = true, length = 12)
-    private String token;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    private final Long id;             // 신규 생성 시 null
+    private final MemberId inviter;
+    private final InvitationToken token;
     private InvitationStatus status;
+    private final LocalDateTime expiresAt;
+    private MemberId invitee;          // 수락 전 null
+    private LocalDateTime acceptedAt;  // 수락 전 null
+    private final LocalDateTime createdAt;  // 영속 후 채워짐 (신규 생성 시 null)
 
-    @Column(nullable = false)
-    private LocalDateTime expiresAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "invitee_id")
-    private Member invitee;
-
-    private LocalDateTime acceptedAt;
-
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
+    private Invitation(Long id, MemberId inviter, InvitationToken token, InvitationStatus status,
+                       LocalDateTime expiresAt, MemberId invitee, LocalDateTime acceptedAt,
+                       LocalDateTime createdAt) {
+        this.id = id;
+        this.inviter = inviter;
+        this.token = token;
+        this.status = status;
+        this.expiresAt = expiresAt;
+        this.invitee = invitee;
+        this.acceptedAt = acceptedAt;
+        this.createdAt = createdAt;
     }
 
-    public static Invitation create(Member inviter, String token) {
-        Invitation inv = new Invitation();
-        inv.inviter = inviter;
-        inv.token = token;
-        inv.status = InvitationStatus.PENDING;
-        inv.expiresAt = LocalDateTime.now().plusDays(7);
-        return inv;
+    public static Invitation create(MemberId inviter, InvitationToken token) {
+        return new Invitation(null, inviter, token, InvitationStatus.PENDING,
+            LocalDateTime.now().plusDays(EXPIRY_DAYS), null, null, null);
+    }
+
+    public static Invitation reconstitute(Long id, MemberId inviter, InvitationToken token,
+                                          InvitationStatus status, LocalDateTime expiresAt,
+                                          MemberId invitee, LocalDateTime acceptedAt,
+                                          LocalDateTime createdAt) {
+        return new Invitation(id, inviter, token, status, expiresAt, invitee, acceptedAt, createdAt);
     }
 
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(expiresAt);
     }
 
-    public void accept(Member invitee) {
-        if (this.status != InvitationStatus.PENDING) {
+    public boolean isPending() {
+        return status == InvitationStatus.PENDING;
+    }
+
+    public void accept(MemberId invitee) {
+        if (status != InvitationStatus.PENDING) {
             throw new BusinessException(ErrorCode.INVITATION_NOT_AVAILABLE);
         }
         if (isExpired()) {

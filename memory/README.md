@@ -7,7 +7,8 @@
 | 파일 | 내용 |
 |------|------|
 | architecture.md | 기술 스택 및 아키텍처 결정사항 (FE/BE 개요) |
-| adr/ADR-BE-001-layered-architecture.md | BE 레이어드 아키텍처 채택 |
+| adr/ADR-BE-001-layered-architecture.md | BE 레이어드 아키텍처 채택 (⚠️ ADR-BE-002로 대체됨) |
+| adr/ADR-BE-002-hexagonal-architecture.md | BE 헥사고날(Ports&Adapters)+DDD, JPA 엔티티/도메인 분리 |
 | adr/ADR-FE-001-layered-architecture.md | FE 레이어드 아키텍처 채택 |
 | adr/ADR-FE-002-dash-plus-membership.md | Dash+ 멤버십·무한 hop·svg/오버레이 결정 |
 

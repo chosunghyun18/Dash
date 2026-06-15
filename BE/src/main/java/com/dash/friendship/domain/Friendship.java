@@ -1,50 +1,36 @@
 package com.dash.friendship.domain;
 
-import com.dash.member.domain.Member;
-import jakarta.persistence.*;
-import lombok.AccessLevel;
+import com.dash.member.domain.MemberId;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
-@Entity
-@Table(name = "friendships",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"member_a_id", "member_b_id"}))
+/**
+ * 친구 관계 애그리거트 루트 (순수 도메인). 무방향 관계를 단일 레코드로 표현하며,
+ * memberA < memberB 정렬 불변식으로 양방향 중복을 방지한다.
+ */
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Friendship {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private final Long id;          // 신규 생성 시 null
+    private final MemberId memberA; // 항상 더 작은 id
+    private final MemberId memberB; // 항상 더 큰 id
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_a_id", nullable = false)
-    private Member memberA;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_b_id", nullable = false)
-    private Member memberB;
-
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
+    private Friendship(Long id, MemberId memberA, MemberId memberB) {
+        this.id = id;
+        this.memberA = memberA;
+        this.memberB = memberB;
     }
 
-    /** member_a_id < member_b_id 를 보장하여 중복 row 방지 */
-    public static Friendship create(Member a, Member b) {
-        Friendship f = new Friendship();
-        if (a.getId() < b.getId()) {
-            f.memberA = a;
-            f.memberB = b;
-        } else {
-            f.memberA = b;
-            f.memberB = a;
-        }
-        return f;
+    /** 두 회원으로 친구 관계 생성 — id 순서로 정렬하여 불변식 보장. */
+    public static Friendship create(MemberId a, MemberId b) {
+        return a.compareTo(b) <= 0 ? new Friendship(null, a, b) : new Friendship(null, b, a);
+    }
+
+    public static Friendship reconstitute(Long id, MemberId memberA, MemberId memberB) {
+        return new Friendship(id, memberA, memberB);
+    }
+
+    /** 관계에서 기준 회원이 아닌 상대 회원. */
+    public MemberId other(MemberId me) {
+        return memberA.equals(me) ? memberB : memberA;
     }
 }
