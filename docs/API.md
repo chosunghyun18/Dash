@@ -1,6 +1,13 @@
 # Dash — 필요 API 목록
 
-## 인증
+> **구현 현황** (2026-06-15 기준)
+> - ✅ **BE 구현 완료**: 내 프로필, 친구, 지인, 유저 프로필, 연락 요청, 초대
+> - ❌ **BE 미구현**: 인증(모델 충돌로 보류), Dash+ 멤버십/결제(결제 연동 TBD)
+
+## 인증 (❌ BE 미구현 — 모델 충돌)
+
+> `Member` 엔티티는 `kakaoId` 기반 소셜 로그인 모델이라 아래 email/password 스펙과 충돌하며,
+> FE는 Apple/Google 로그인을 가정한다(3자 불일치). 인증 방식 확정 후 별도 구현 예정.
 
 | 메서드 | 엔드포인트 | 설명 | 요청 바디 | 응답 |
 |--------|-----------|------|-----------|------|
@@ -11,12 +18,14 @@
 
 ---
 
-## 내 프로필
+## 내 프로필 (✅ BE 구현 완료)
+
+> 구현: `com.dash.profile` — 프로필 row 부재 시 빈 프로필 자동 생성. nickname-check는 본인 현재 닉네임을 `available=true`로 처리. phone/email은 정확히 하나만(XOR) 허용.
 
 | 메서드 | 엔드포인트 | 설명 | 요청 바디 | 응답 |
 |--------|-----------|------|-----------|------|
 | GET | `/api/v1/users/me/profile` | 내 프로필 조회 | — | `MyProfile` |
-| PUT | `/api/v1/users/me/profile` | 내 프로필 수정 | `{ nickname, phone?, email?, introText }` | 200 |
+| PUT | `/api/v1/users/me/profile` | 내 프로필 수정 | `{ nickname, phone?, email?, introText }` | `MyProfile` |
 | GET | `/api/v1/users/nickname-check?nickname=xxx` | 닉네임 중복 확인 | — | `{ available: boolean }` |
 
 ```typescript
@@ -31,7 +40,9 @@
 
 ---
 
-## 친구
+## 친구 (✅ BE 구현 완료)
+
+> 구현: `com.dash.friendship`. `bio`는 상대 프로필의 `introText`, `profileImageUrl`은 프로필 이미지. `id`는 friendship id.
 
 | 메서드 | 엔드포인트 | 설명 | 응답 |
 |--------|-----------|------|------|
@@ -50,7 +61,9 @@
 
 ---
 
-## 지인 (탐색 깊이)
+## 지인 (탐색 깊이) (✅ BE 구현 완료)
+
+> 구현: `com.dash.user.UserQueryService`. 조회자(viewer)는 결과에서 제외하며, 각 지인의 `hasAcquaintances`는 "해당 유저(드릴다운 기준 노드)를 제외한 추가 친구 보유 여부"로 계산. `bio` 포함. `acquaintanceCount`/`hop`/`via`는 미제공(추후).
 
 | 메서드 | 엔드포인트 | 설명 | 응답 |
 |--------|-----------|------|------|
@@ -73,7 +86,9 @@
 
 ---
 
-## 유저 프로필 조회
+## 유저 프로필 조회 (✅ BE 구현 완료)
+
+> 구현: `com.dash.user.UserQueryService`. `hasAcquaintances`는 조회자를 제외한 친구 보유 여부.
 
 | 메서드 | 엔드포인트 | 설명 | 응답 |
 |--------|-----------|------|------|
@@ -92,7 +107,9 @@
 
 ---
 
-## 연락 요청
+## 연락 요청 (✅ BE 구현 완료)
+
+> 구현: `com.dash.contactrequest`. 연락처는 ACCEPTED 상태에서만 노출되며 양방향 교환(보낸 요청→상대 연락처, 받은 요청→요청자 연락처). 수락/거절은 수신자(target)만 가능. `via`는 미제공(추후). 거절은 200 반환.
 
 | 메서드 | 엔드포인트 | 설명 | 요청 바디 | 응답 |
 |--------|-----------|------|-----------|------|
@@ -170,14 +187,15 @@
 
 ---
 
-## 구현 우선순위
+## 구현 우선순위 / 현황
 
-| 우선순위 | 도메인 | API |
-|----------|--------|-----|
-| 🔴 필수 | 내 프로필 | GET/PUT `/me/profile`, nickname-check |
-| 🔴 필수 | 친구 | GET `/friends` |
-| 🔴 필수 | 지인 | GET `/users/{userId}/acquaintances` |
-| 🔴 필수 | 유저 프로필 | GET `/users/{userId}/profile` |
-| 🔴 필수 | 연락 요청 | POST/GET/accept/reject |
-| 🟡 선택 | 인증 | signup, login, refresh |
-| 🟢 추후 | Dash+ | membership, billing/plus/checkout |
+| 우선순위 | 도메인 | API | 상태 |
+|----------|--------|-----|------|
+| 🔴 필수 | 내 프로필 | GET/PUT `/me/profile`, nickname-check | ✅ 완료 |
+| 🔴 필수 | 친구 | GET `/friends` | ✅ 완료 |
+| 🔴 필수 | 지인 | GET `/users/{userId}/acquaintances` | ✅ 완료 |
+| 🔴 필수 | 유저 프로필 | GET `/users/{userId}/profile` | ✅ 완료 |
+| 🔴 필수 | 연락 요청 | POST/GET/accept/reject | ✅ 완료 |
+| — | 초대 | invitations/* | ✅ 완료 (기존) |
+| 🟡 선택 | 인증 | signup, login, refresh | ❌ 보류 (모델 충돌) |
+| 🟢 추후 | Dash+ | membership, billing/plus/checkout | ❌ 보류 (결제 TBD) |

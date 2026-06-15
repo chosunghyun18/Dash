@@ -11,7 +11,7 @@ date: 2026-06-11
 
 | 레이어 | 기술 |
 |--------|------|
-| BE | Spring Boot 3.3 + Kotlin + PostgreSQL |
+| BE | Spring Boot 3.3 + Java 21 + Lombok + PostgreSQL + Flyway |
 | FE | React Native (Expo Router) + TypeScript |
 | 인증 | JWT (access 24h + refresh 7d) |
 | 상태관리 | Zustand + React Query |
@@ -21,8 +21,25 @@ date: 2026-06-11
 ```
 Controller → Service → Repository → Domain
 ```
-- Domain은 Spring/JPA 의존성 금지 (순수 Kotlin)
-- DTO ↔ Domain 변환은 Service 레이어에서
+- DTO ↔ Domain 변환은 Service 레이어 (DTO는 record + static `of` 팩토리)
+- 컨트롤러 공통: `@PreAuthorize("isAuthenticated()")` + `@AuthenticationPrincipal` → memberId
+- 엔티티는 JPA 어노테이션 사용(`@Entity`), Lombok `@Getter`/`@NoArgsConstructor(PROTECTED)` + static 팩토리
+
+### BE 패키지 (`com.dash`)
+
+```
+member/        회원 엔티티/리포지토리 (kakaoId 기반)
+profile/       내 프로필 — GET/PUT /me/profile, nickname-check
+friendship/    친구 관계·친구 목록 — GET /friends
+user/          타 유저 프로필·지인 탐색 — GET /users/{id}/profile, /acquaintances
+contactrequest/ 연락 요청 — POST/GET sent·received/accept/reject
+invitation/    친구 초대 링크
+global/        보안(JWT)·예외(BusinessException/ErrorCode)·Swagger
+```
+> 상세 엔드포인트 맵: `docs/CODEMAPS/backend.md`
+
+### 인증 보류 (미구현)
+- `Member`는 `kakaoId` 모델인데 API.md는 email/password, FE는 Apple/Google 가정 — 3자 충돌로 auth 엔드포인트 보류.
 
 ## FE 폴더 구조
 

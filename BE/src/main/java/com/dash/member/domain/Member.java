@@ -52,6 +52,10 @@ public class Member {
         updatedAt = LocalDateTime.now();
     }
 
+    public void changeNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
     public static Member create(String kakaoId, String nickname, Gender gender,
                                 Integer birthYear, String country) {
         Member member = new Member();

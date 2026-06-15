@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByKakaoId(String kakaoId);
+
+    boolean existsByNicknameAndIdNot(String nickname, Long id);
 }

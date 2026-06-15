@@ -18,7 +18,18 @@ public enum ErrorCode {
     CANNOT_INVITE_SELF(HttpStatus.BAD_REQUEST, "자기 자신을 초대할 수 없습니다"),
 
     // Friendship
-    ALREADY_FRIENDS(HttpStatus.CONFLICT, "이미 친구 관계입니다");
+    ALREADY_FRIENDS(HttpStatus.CONFLICT, "이미 친구 관계입니다"),
+
+    // Profile
+    NICKNAME_DUPLICATED(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다"),
+    INVALID_CONTACT(HttpStatus.BAD_REQUEST, "연락처(전화 또는 이메일) 중 하나만 입력해야 합니다"),
+
+    // Contact Request
+    CONTACT_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "연락 요청을 찾을 수 없습니다"),
+    CONTACT_REQUEST_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 연락 요청을 보냈습니다"),
+    CONTACT_REQUEST_NOT_PENDING(HttpStatus.CONFLICT, "이미 처리된 연락 요청입니다"),
+    CONTACT_REQUEST_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 연락 요청에 대한 권한이 없습니다"),
+    CANNOT_REQUEST_SELF(HttpStatus.BAD_REQUEST, "자기 자신에게 연락 요청할 수 없습니다");
 
     private final HttpStatus status;
     private final String message;

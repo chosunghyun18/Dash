@@ -1,8 +1,16 @@
 # Dash — 문서 인덱스 (Documentation Index)
 
-**Last Updated:** 2026-06-11
+**Last Updated:** 2026-06-15
 
 > 필요한 문서로 바로 점프하기 위한 라우팅 인덱스. 전체를 읽지 말고 아래 표에서 해당 항목만 여세요.
+
+## 🗂️ BE 문서 허브 (docs/BE/)
+
+| 문서 | 무엇을 찾을 때 |
+|------|----------------|
+| `../BE/INDEX.md` | **BE 전체 진입점** — DB·기능 문서 라우팅 |
+| `../BE/database/` | 테이블별 스키마·제약·연관관계 (members, profiles, friendships, invitations, contact_requests) |
+| `../BE/features/` | 도메인 기능별 엔드포인트·서비스 로직·에러 (profile, friendship, user, contact-request, invitation, auth) |
 
 ## 코드맵 (docs/CODEMAPS/)
 
@@ -10,7 +18,7 @@
 |------|----------------|------|
 | `INDEX.md` (이 문서) | 어떤 문서를 봐야 할지 모를 때 | 전체 라우팅 |
 | `frontend.md` | FE 화면·컴포넌트·스토어·Dash+ 구조 | React Native / Expo |
-| `backend.md` | Spring 컨트롤러·서비스·엔드포인트 | Spring Boot (예정) |
+| `backend.md` | Spring 컨트롤러·서비스·엔드포인트 | Spring Boot |
 | `database.md` | JPA 엔티티 관계 | PostgreSQL (예정) |
 
 ## 명세 문서 (docs/)
