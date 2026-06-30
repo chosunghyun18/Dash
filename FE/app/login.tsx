@@ -5,6 +5,7 @@ import {
   Platform,
   Alert,
   ScrollView,
+  TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
@@ -16,7 +17,7 @@ import { colors, typography } from '../theme';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
-  const { loginWithApple, loginWithGoogle, appleLoading, googleLoading } = useSocialLogin();
+  const { loginWithApple, loginWithGoogle, devLogin, appleLoading, googleLoading } = useSocialLogin();
 
   const handleApple = async () => {
     const ok = await loginWithApple();
@@ -66,6 +67,15 @@ export default function LoginScreen() {
           <View style={styles.buttonsBlock}>
             {buttons[0]}
             {buttons[1]}
+            {__DEV__ && (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={devLogin}
+                style={styles.devButton}
+              >
+                <Text style={styles.devButtonText}>개발 모드로 건너뛰기</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.privacyRow}>
@@ -123,6 +133,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   buttonsBlock: { gap: 10, marginTop: 36 },
+  devButton: {
+    marginTop: 4,
+    alignSelf: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.border,
+  },
+  devButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textMuted,
+    letterSpacing: -0.2,
+  },
   privacyRow: {
     flexDirection: 'row',
     alignItems: 'center',
