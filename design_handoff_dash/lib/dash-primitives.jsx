@@ -275,7 +275,7 @@ const MOCK_SENT = [
 
 // Deeper hops (Instagram-follow-style infinite network)
 // Keyed by connection id — so after tapping 재윤(c1)'s "지인 목록" we show c1's friends.
-// 3촌부터는 Plus 전용 (freeHopLimit = 2).
+// 열람·탐색은 전 촌수 무료. 연락 요청만 3촌부터 Plus 전용 (freeHopLimit = 무료 연락 요청 가능 촌수, 기본 2).
 const MOCK_DEEP_CONNECTIONS = {
   // 재윤(c1)의 지인 = 3촌
   c1: [

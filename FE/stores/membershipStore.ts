@@ -4,7 +4,10 @@ export type Plan = 'free' | 'plus';
 
 export const DASH_PLUS_PRICE = 9900; // 월 구독가 (원)
 export const DASH_PLUS_PRICE_YEARLY = 99000; // 연 구독가 (원)
-/** 무료 회원이 열람 가능한 최대 촌수 (2촌까지). 3촌부터 Dash+ 전용 */
+/**
+ * 무료 회원이 '연락 요청'을 보낼 수 있는 최대 촌수 (2촌까지). 3촌부터 Dash+ 전용.
+ * 열람·탐색(소개 보기, 지인 리스트 drilldown)은 전 촌수 무료 — 게이팅은 연락 요청에만.
+ */
 export const FREE_HOP_LIMIT = 2;
 
 interface MembershipState {

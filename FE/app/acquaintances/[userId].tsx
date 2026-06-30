@@ -3,9 +3,7 @@ import { View, FlatList, Text, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, type Href } from 'expo-router';
 import { Sparkles } from 'lucide-react-native';
 import { useAcquaintances, useReceivedRequests, useUserProfile } from '../../hooks/useFriends';
-import { useMembershipStore, FREE_HOP_LIMIT } from '../../stores/membershipStore';
 import { ConnectionCard } from '../../components/ConnectionCard';
-import { LockedHopGate } from '../../components/LockedHopGate';
 import { EmptyState } from '../../components/EmptyState';
 import { ScreenLoader } from '../../components/ScreenLoader';
 import { HopPill, HopBreadcrumb, TrailNode } from '../../components/HopIndicators';
@@ -21,7 +19,6 @@ export default function AcquaintancesScreen() {
   const { data: acquaintances, isLoading } = useAcquaintances(headUserId);
   const { data: headProfile } = useUserProfile(headUserId);
   const { data: received } = useReceivedRequests();
-  const isPlus = useMembershipStore((s) => s.plan === 'plus');
 
   // trail = 루트 친구부터 현재 head까지의 전체 경로 (head 포함)
   const trail = useMemo<TrailNode[]>(() => {
@@ -33,12 +30,8 @@ export default function AcquaintancesScreen() {
 
   const head = trail[trail.length - 1];
   const listHop = trail.length + 1; // 보고 있는 사람들의 촌수
-  const locked = !isPlus && listHop > FREE_HOP_LIMIT;
-
+  // 정본 규칙: 지인 리스트 탐색·소개 열람은 전 촌수 무료. 게이팅은 연락 요청(프로필 상세)에만.
   const list = acquaintances ?? [];
-  const isEmpty = list.length === 0;
-
-  const openPaywall = () => router.push('/upgrade' as Href);
 
   const getPendingRequestId = (profileUserId: number) =>
     received?.find((r) => r.requesterUserId === profileUserId && r.status === 'PENDING')?.id;
@@ -74,21 +67,15 @@ export default function AcquaintancesScreen() {
           <ScreenLoader />
         ) : (
           <FlatList
-            data={locked ? [] : list}
+            data={list}
             keyExtractor={(item) => String(item.id)}
             renderItem={({ item }) => {
-              const nextLocked = !isPlus && listHop + 1 > FREE_HOP_LIMIT;
               const hasDeeper = (item.acquaintanceCount ?? 0) > 0;
               return (
                 <ConnectionCard
                   person={item}
                   onIntro={() => openIntro(item.userId)}
-                  onDrill={
-                    hasDeeper
-                      ? () => (nextLocked ? openPaywall() : drillDown(item))
-                      : undefined
-                  }
-                  nextLocked={nextLocked}
+                  onDrill={hasDeeper ? () => drillDown(item) : undefined}
                 />
               );
             }}
@@ -112,35 +99,25 @@ export default function AcquaintancesScreen() {
                     </View>
                   </View>
                 </View>
-                {locked && !isEmpty && (
-                  <LockedHopGate
-                    hop={listHop}
-                    count={list.length}
-                    sampleName={list[0]?.nickname}
-                    onUpgrade={openPaywall}
-                  />
-                )}
               </>
             }
             ListFooterComponent={
-              !locked && !isEmpty ? (
+              list.length > 0 ? (
                 <View style={styles.pricingBox}>
                   <Sparkles size={16} color={colors.primary} />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.pricingTitle}>소개 보기는 건당 1,900원이에요.</Text>
-                    <Text style={styles.pricingDesc}>진짜 관심 있는 분만 열어보세요.</Text>
+                    <Text style={styles.pricingTitle}>마음에 드는 분께 연락 요청을 보내보세요.</Text>
+                    <Text style={styles.pricingDesc}>소개 열람은 무료 — 3촌+ 연락 요청만 Dash+예요.</Text>
                   </View>
                 </View>
               ) : null
             }
             ListEmptyComponent={
-              !locked ? (
-                <EmptyState
-                  title={`${head?.name ?? '친구'}님이 아직 지인을 등록하지 않았어요`}
-                  subtitle={'조금 더 기다리거나\n다른 친구의 지인을 확인해보세요.'}
-                  icon="heart"
-                />
-              ) : null
+              <EmptyState
+                title={`${head?.name ?? '친구'}님이 아직 지인을 등록하지 않았어요`}
+                subtitle={'조금 더 기다리거나\n다른 친구의 지인을 확인해보세요.'}
+                icon="heart"
+              />
             }
           />
         )}

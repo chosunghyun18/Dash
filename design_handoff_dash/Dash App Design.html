@@ -303,7 +303,7 @@ function TweaksPanel() {
         </button>
       </div>
 
-      <div style={{ fontSize: 11, fontWeight: 700, color: '#999', letterSpacing: 0.3, marginBottom: 6, textTransform: 'uppercase' }}>무료 열람 가능 촌수</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: '#999', letterSpacing: 0.3, marginBottom: 6, textTransform: 'uppercase' }}>무료 연락 요청 촌수</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <input type="range" min="1" max="5" step="1" value={t.freeHopLimit}
           onChange={(e) => update({ freeHopLimit: +e.target.value })}
@@ -381,7 +381,7 @@ function App() {
     },
     {
       id: 'connections-3rd',
-      label: '3b. 3촌 · Plus 게이트',
+      label: '3b. 3촌 지인 리스트 · 탐색 무료',
       node: <ScreenConnections trail={[MOCK_FRIENDS[0], MOCK_CONNECTIONS.f1[0]]} onBack={() => {}} onOpenIntro={() => {}} onDrillDown={() => {}} onUpgrade={() => {}} />,
       hasTab: false,
     },
@@ -447,7 +447,7 @@ function App() {
         </DCSection>
 
         {/* Section 1: Interactive prototypes */}
-        <DCSection id="prototype" title="인터랙티브 프로토타입" subtitle="실제 동작 플로우 — 친구 → 지인(2촌) → 지인의 지인(3촌, Plus) → 4촌... 인스타그램 팔로우 타듯 무한 확장. 마이페이지에서 Dash+ 업그레이드 유도.">
+        <DCSection id="prototype" title="인터랙티브 프로토타입" subtitle="실제 동작 플로우 — 친구 → 지인(2촌) → 지인의 지인(3촌) → 4촌... 인스타그램 팔로우 타듯 무한 확장. 열람·탐색은 전 촌수 무료, 3촌+ 연락 요청만 Dash+. 마이페이지에서 업그레이드 유도.">
           <DCArtboard id="ios-proto" label="iOS · Home" width={PHONE_W + 4} height={PHONE_H + 4}>
             <DashPrototype os="ios" initial="home" />
           </DCArtboard>
@@ -460,8 +460,8 @@ function App() {
         </DCSection>
 
         {/* Section 1.5: Dash+ feature highlight */}
-        <DCSection id="plus" title="Dash+ · 유료 회원 기능" subtitle="지인의 지인의 지인까지 무한 탐색. 무료는 2촌까지, 3촌부터는 Plus 전용 (Tweaks 패널에서 Free/Plus 상태와 무료 촌수 한계를 토글해볼 수 있어요).">
-          <DCArtboard id="plus-gate-3rd" label="3촌 Plus 게이트 (Free)" width={PHONE_W + 4} height={PHONE_H + 4}>
+        <DCSection id="plus" title="Dash+ · 유료 회원 기능" subtitle="지인의 지인의 지인까지 무한 탐색. 열람·탐색은 전 촌수 무료, 3촌+ 연락 요청만 Plus 전용 (Tweaks 패널에서 Free/Plus 상태와 무료 연락 요청 촌수를 토글해볼 수 있어요).">
+          <DCArtboard id="plus-gate-3rd" label="3촌 지인 리스트 · 탐색 무료" width={PHONE_W + 4} height={PHONE_H + 4}>
             <StaticScreen os="ios">
               <ScreenConnections trail={[MOCK_FRIENDS[0], MOCK_CONNECTIONS.f1[0]]} onBack={() => {}} onOpenIntro={() => {}} onDrillDown={() => {}} onUpgrade={() => {}} />
             </StaticScreen>
@@ -471,7 +471,7 @@ function App() {
               <ScreenDashPlus onBack={() => {}} onSubscribe={() => {}} />
             </StaticScreen>
           </DCArtboard>
-          <DCArtboard id="plus-profile-blurred" label="3촌 프로필 · 소개글 블러" width={PHONE_W + 4} height={PHONE_H + 4}>
+          <DCArtboard id="plus-profile-gated" label="3촌 프로필 · 열람 무료 / 연락 요청만 게이팅" width={PHONE_W + 4} height={PHONE_H + 4}>
             <StaticScreen os="ios">
               <ScreenProfileDetail mode="normal" hop={3} person={{ name: '수민', bio: MOCK_DEEP_CONNECTIONS.c1[0].bio, via: '재윤을 통해' }} onBack={() => {}} onUpgrade={() => {}} />
             </StaticScreen>

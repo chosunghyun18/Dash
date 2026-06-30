@@ -15,8 +15,8 @@ type PlanId = 'yearly' | 'monthly';
 
 const BENEFITS = [
   { Icon: Users, title: '무제한 촌수', desc: '2촌 · 3촌 · 4촌… 필요한 만큼 계속 타고 들어갈 수 있어요.' },
-  { Icon: Heart, title: '3촌+ 소개글 열람 & 연락 요청', desc: '멀리 있는 지인에게도 먼저 다가갈 수 있어요.' },
-  { Icon: Sparkles, title: "'소개 보기' 월 5회 무료", desc: '건당 1,900원 대신 월 5회까지 무료로 열람.' },
+  { Icon: Heart, title: '3촌+ 연락 요청', desc: '멀리 있는 지인에게도 먼저 연락 요청을 보낼 수 있어요.' },
+  { Icon: Sparkles, title: '소개 우선 노출', desc: '관심도 높은 분에게 내 프로필이 먼저 보여요.' },
   { Icon: Crown, title: 'Plus 배지 · 우선 매칭', desc: '프로필에 Plus 표시 · 관심도 높은 분에게 먼저 노출.' },
 ];
 

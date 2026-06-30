@@ -1,6 +1,4 @@
 import { api } from './api';
-import { USE_MOCK } from '../config';
-import { authMocks } from '../mocks';
 
 export interface SocialLoginResponse {
   accessToken: string;
@@ -22,19 +20,28 @@ interface GoogleLoginRequest {
 
 export const authService = {
   loginWithApple: async (req: AppleLoginRequest): Promise<SocialLoginResponse> => {
-    if (USE_MOCK) return authMocks.loginWithApple();
     const { data } = await api.post<SocialLoginResponse>('/api/v1/auth/apple', req);
     return data;
   },
 
   loginWithGoogle: async (req: GoogleLoginRequest): Promise<SocialLoginResponse> => {
-    if (USE_MOCK) return authMocks.loginWithGoogle();
     const { data } = await api.post<SocialLoginResponse>('/api/v1/auth/google', req);
     return data;
   },
 
+  /**
+   * 개발 전용 로그인. BE(local 프로파일)의 `/api/v1/auth/dev` 가 시드 멤버로 정식 JWT를 발급.
+   * 기본 memberId=1(수지). 운영 빌드에는 노출되지 않는다.
+   */
+  devLogin: async (memberId?: number): Promise<SocialLoginResponse> => {
+    const { data } = await api.post<SocialLoginResponse>(
+      '/api/v1/auth/dev',
+      memberId ? { memberId } : {}
+    );
+    return data;
+  },
+
   signOut: async (): Promise<void> => {
-    if (USE_MOCK) return authMocks.signOut();
     await api.post('/api/v1/auth/sign-out');
   },
 };

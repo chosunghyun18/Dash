@@ -43,6 +43,15 @@ export function useSocialLogin() {
     }
   };
 
+  /**
+   * 개발 환경 전용 로그인.
+   *
+   * BE(local 프로파일)의 `/api/v1/auth/dev` 를 호출해 시드 멤버(기본 수지 id=1)로
+   * 정식 JWT를 발급받아 세션에 저장한다. 이후 보호 API가 인증되어 시드 데이터가 보인다.
+   * `__DEV__` 빌드에서만 버튼이 렌더되며, 운영 번들엔 BE 엔드포인트도 존재하지 않는다.
+   */
+  const devLogin = () => run('google', () => authService.devLogin());
+
   return {
     loginWithApple: () =>
       run('apple', () =>
@@ -53,6 +62,7 @@ export function useSocialLogin() {
       ),
     loginWithGoogle: () =>
       run('google', () => authService.loginWithGoogle({ idToken: 'mock-google-id-token' })),
+    devLogin,
     appleLoading: loadingProvider === 'apple',
     googleLoading: loadingProvider === 'google',
   };

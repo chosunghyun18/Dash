@@ -318,7 +318,8 @@ function ScreenConnections({ trail = [], friend, onBack, onOpenIntro, onDrillDow
   // Hop level we're currently VIEWING (i.e. the hop of the people in the list):
   //   trail length N → list shows hop (N+1)
   const listHop = realTrail.length + 1;
-  const locked = !t.isPlus && listHop > (t.freeHopLimit || 2);
+  // 정본 규칙: 지인 리스트 탐색·소개 열람은 전 촌수 무료. 게이팅은 연락 요청에만.
+  // (구버전의 3촌+ 리스트 전체 잠금/LockedHopGate는 폐기됨.)
 
   // Pick list based on current node in trail
   let list = [];
@@ -354,12 +355,7 @@ function ScreenConnections({ trail = [], friend, onBack, onOpenIntro, onDrillDow
       </div>
 
       <div style={{ flex: 1, overflow: 'auto', padding: '8px 16px 16px' }}>
-        {/* Locked state = tier exceeded */}
-        {locked && !isEmpty && (
-          <LockedHopGate hop={listHop} count={list.length} onUpgrade={onUpgrade} sample={list[0]} />
-        )}
-
-        {!locked && isEmpty && (
+        {isEmpty && (
           <EmptyState
             title={`${head?.name || '친구'}님이 아직 지인을 등록하지 않았어요`}
             subtitle={"조금 더 기다리거나\n다른 친구의 지인을 확인해보세요."}
@@ -367,9 +363,7 @@ function ScreenConnections({ trail = [], friend, onBack, onOpenIntro, onDrillDow
           />
         )}
 
-        {!locked && !isEmpty && list.map((c) => {
-          const nextHop = listHop + 1;
-          const nextLocked = !t.isPlus && nextHop > (t.freeHopLimit || 2);
+        {!isEmpty && list.map((c) => {
           const fcount = CONNECTION_FRIEND_COUNTS[c.id] ?? (c.friendCount ?? 0);
           return (
             <ConnectionCard
@@ -378,25 +372,9 @@ function ScreenConnections({ trail = [], friend, onBack, onOpenIntro, onDrillDow
               friendCount={fcount}
               onIntro={() => onOpenIntro && onOpenIntro(c, head, listHop)}
               onDrill={fcount > 0 ? () => onDrillDown && onDrillDown(c) : null}
-              nextLocked={nextLocked}
             />
           );
         })}
-
-        {!locked && !isEmpty && (
-          <div style={{
-            marginTop: 10, padding: '12px 14px',
-            background: t.primarySoft, borderRadius: t.radius,
-            fontSize: 12, color: '#B8385A', lineHeight: 1.5,
-            display: 'flex', gap: 8, alignItems: 'flex-start',
-          }}>
-            <Icon.sparkle size={16} />
-            <div>
-              <b>소개 보기는 건당 1,900원이에요.</b><br/>
-              진짜 관심 있는 분만 열어보세요.
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -445,7 +423,7 @@ function HopPill({ hop }) {
 }
 
 // Connection card with drill-down affordance (infinite follow)
-function ConnectionCard({ person, friendCount, onIntro, onDrill, nextLocked }) {
+function ConnectionCard({ person, friendCount, onIntro, onDrill }) {
   const t = useDashTokens();
   return (
     <div style={{
@@ -467,66 +445,29 @@ function ConnectionCard({ person, friendCount, onIntro, onDrill, nextLocked }) {
           </div>
         </div>
         <DashButton size="sm" variant="primary" onClick={onIntro}>
-          <Icon.lock size={12} style={{ marginRight: 3 }} /> 소개 보기
+          소개 보기
         </DashButton>
       </div>
-      {/* drill-down row: 지인 N명 → */}
+      {/* drill-down row: 지인 N명 → (탐색은 전 촌수 무료) */}
       {friendCount > 0 && (
         <div
           onClick={onDrill}
           style={{
             marginTop: 10, padding: '8px 12px',
-            background: nextLocked ? t.plusAccentSoft : t.bgSoft,
+            background: t.bgSoft,
             borderRadius: t.radius - 4,
             display: 'flex', alignItems: 'center', gap: 8,
             fontSize: 12, cursor: onDrill ? 'pointer' : 'default',
-            color: nextLocked ? t.plusAccent : t.textMuted,
+            color: t.textMuted,
           }}
         >
           <Icon.users size={14} />
           <span style={{ fontWeight: 600, letterSpacing: -0.1 }}>
             {person.name}님의 지인 {friendCount}명 더 보기
           </span>
-          {nextLocked && <PlusBadge size="xs" variant="solid" style={{ marginLeft: 'auto' }} />}
-          {!nextLocked && <Icon.chevron size={12} style={{ marginLeft: 'auto', color: t.textFaint }} />}
+          <Icon.chevron size={12} style={{ marginLeft: 'auto', color: t.textFaint }} />
         </div>
       )}
-    </div>
-  );
-}
-
-// Locked-hop gate — shown when free user hits 3촌+
-function LockedHopGate({ hop, count, onUpgrade, sample }) {
-  const t = useDashTokens();
-  return (
-    <div style={{
-      padding: '28px 20px 24px',
-      background: `linear-gradient(180deg, ${t.plusAccentSoft} 0%, #fff 100%)`,
-      borderRadius: t.radius + 4,
-      border: `1px solid ${t.plusAccentSoft}`,
-      textAlign: 'center',
-    }}>
-      {/* Blurred preview avatars */}
-      <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', gap: -8, marginBottom: 16, filter: 'blur(6px)', opacity: 0.7 }}>
-        {[0, 1, 2].map((i) => (
-          <Avatar key={i} name={sample?.name || '?'} size={56} style={{ marginLeft: i === 0 ? 0 : -14, border: '3px solid #fff' }} />
-        ))}
-      </div>
-
-      <PlusBadge size="sm" variant="solid" style={{ marginBottom: 12 }} />
-      <div style={{ fontSize: 17, fontWeight: 800, color: t.text, letterSpacing: -0.4, marginBottom: 6 }}>
-        {hop}촌 지인 {count}명을 만나보세요
-      </div>
-      <div style={{ fontSize: 13, color: t.textMuted, lineHeight: 1.6, marginBottom: 18, whiteSpace: 'pre-line' }}>
-        {`Dash+는 ${hop}촌 이상의 지인 소개글도 열람하고\n연락 요청까지 보낼 수 있어요.`}
-      </div>
-      <DashButton variant="primary" size="md" onClick={onUpgrade}
-        style={{ background: t.plusAccent, minWidth: 180 }}>
-        <Icon.crown size={14} style={{ marginRight: 4 }} /> Dash+ 시작하기
-      </DashButton>
-      <div style={{ marginTop: 10, fontSize: 11, color: t.textFaint }}>
-        월 9,900원 · 언제든 해지
-      </div>
     </div>
   );
 }
@@ -538,7 +479,8 @@ function ScreenProfileDetail({ person, mode = 'normal', hop, onBack, onRequest, 
   // mode: 'normal' | 'accept' | 'accepted' | 'requested'
   const t = useDashTokens();
   const p = person || { name: '재윤', bio: MOCK_CONNECTIONS.f1[0].bio, via: '민수의 소개', contact: '010-2345-6789' };
-  const showPlusGate = hop && !t.isPlus && hop > (t.freeHopLimit || 2) && mode === 'normal';
+  // 정본 규칙: 프로필 열람·소개글은 전 촌수 무료(블러 없음). 3촌+ free 유저는 '연락 요청'만 게이팅.
+  const requestGated = hop && !t.isPlus && hop > (t.freeHopLimit || 2) && mode === 'normal';
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, background: '#fff' }}>
@@ -581,35 +523,25 @@ function ScreenProfileDetail({ person, mode = 'normal', hop, onBack, onRequest, 
           <div style={{
             fontSize: 14, color: t.text, lineHeight: 1.7,
             letterSpacing: -0.2, whiteSpace: 'pre-line',
-            filter: showPlusGate ? 'blur(5px)' : 'none',
-            userSelect: showPlusGate ? 'none' : 'auto',
-            transition: 'filter 0.2s',
           }}>
             {p.bio || MOCK_CONNECTIONS.f1[0].bio}
           </div>
         </div>
 
-        {/* Plus gate overlay on detail page itself */}
-        {showPlusGate && (
+        {/* 3촌+ free 유저 안내: 열람은 무료, '연락 요청'만 Dash+ 전용 */}
+        {requestGated && (
           <div style={{ padding: '0 20px 20px' }}>
             <div style={{
-              padding: '18px 20px',
-              background: `linear-gradient(135deg, ${t.plusAccentSoft} 0%, #fff 100%)`,
-              border: `1px solid ${t.plusAccentSoft}`,
+              padding: '14px 16px',
+              background: t.plusAccentSoft,
               borderRadius: t.radius + 2,
-              textAlign: 'center',
+              display: 'flex', gap: 10, alignItems: 'flex-start',
             }}>
-              <PlusBadge size="sm" variant="solid" style={{ marginBottom: 10 }} />
-              <div style={{ fontSize: 14, fontWeight: 700, color: t.text, letterSpacing: -0.3, marginBottom: 4 }}>
-                {hop}촌 소개글은 Dash+ 전용이에요
+              <Icon.crown size={16} style={{ color: t.plusAccent, marginTop: 1, flexShrink: 0 }} />
+              <div style={{ fontSize: 12, color: t.text, lineHeight: 1.5 }}>
+                <b style={{ color: t.plusAccent }}>{hop}촌 연락 요청은 Dash+ 전용</b>이에요.<br/>
+                소개글 열람은 무료 — 연락 요청만 Dash+로 보낼 수 있어요.
               </div>
-              <div style={{ fontSize: 12, color: t.textMuted, lineHeight: 1.5, marginBottom: 14 }}>
-                업그레이드하면 소개글 전체를 보고<br/>바로 연락 요청까지 보낼 수 있어요.
-              </div>
-              <DashButton size="md" variant="primary" onClick={onUpgrade}
-                style={{ background: t.plusAccent, minWidth: 160 }}>
-                <Icon.crown size={14} style={{ marginRight: 4 }} /> Dash+ 시작하기
-              </DashButton>
             </div>
           </div>
         )}
@@ -655,12 +587,12 @@ function ScreenProfileDetail({ person, mode = 'normal', hop, onBack, onRequest, 
         borderTop: `1px solid ${t.border}`,
         flexShrink: 0,
       }}>
-        {mode === 'normal' && !showPlusGate && (
+        {mode === 'normal' && !requestGated && (
           <DashButton variant="primary" size="lg" block onClick={onRequest}>
             <Icon.heart size={16} style={{ marginRight: 4 }} /> 연락 요청하기
           </DashButton>
         )}
-        {mode === 'normal' && showPlusGate && (
+        {mode === 'normal' && requestGated && (
           <DashButton variant="primary" size="lg" block onClick={onUpgrade}
             style={{ background: t.plusAccent }}>
             <Icon.crown size={16} style={{ marginRight: 4 }} /> Dash+로 연락 요청
@@ -871,13 +803,13 @@ function ScreenDashPlus({ onBack, onSubscribe, os = 'ios' }) {
           />
           <BenefitRow
             icon={<Icon.heart size={16} />}
-            title="3촌+ 소개글 열람 & 연락 요청"
-            desc="멀리 있는 지인에게도 먼저 다가갈 수 있어요."
+            title="3촌+ 연락 요청"
+            desc="멀리 있는 지인에게도 먼저 연락 요청을 보낼 수 있어요."
           />
           <BenefitRow
             icon={<Icon.sparkle size={16} />}
-            title="'소개 보기' 월 5회 무료"
-            desc="건당 1,900원 대신 월 5회까지 무료로 열람."
+            title="소개 우선 노출"
+            desc="관심도 높은 분에게 내 프로필이 먼저 보여요."
           />
           <BenefitRow
             icon={<Icon.crown size={16} />}

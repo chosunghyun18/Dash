@@ -19,11 +19,9 @@ import { Avatar } from '../../components/Avatar';
 import { DashButton } from '../../components/DashButton';
 import { IntroPathPill } from '../../components/IntroPathPill';
 import { HopPill } from '../../components/HopIndicators';
-import { PlusBadge } from '../../components/PlusBadge';
-import { GradientBox } from '../../components/GradientBox';
 import { ScreenLoader } from '../../components/ScreenLoader';
 import { useMembershipStore, FREE_HOP_LIMIT } from '../../stores/membershipStore';
-import { colors, radius, shadow, spacing, typography, fontFamily } from '../../theme';
+import { colors, radius, shadow, spacing, typography } from '../../theme';
 
 type AcceptedInfo = { phone?: string; email?: string };
 
@@ -63,8 +61,8 @@ export default function ProfileScreen() {
       ? { phone: sentForUser.contactPhone, email: sentForUser.contactEmail }
       : null);
 
-  // 무료 회원이 3촌+ 프로필을 열람할 때 → 소개글 가림 + Plus 게이트
-  const showPlusGate = !!hop && !isPlus && hop > FREE_HOP_LIMIT && mode === 'normal';
+  // 정본 규칙: 프로필 열람·소개글은 전 촌수 무료(블러 없음). 3촌+ free 유저는 '연락 요청'만 게이팅.
+  const requestGated = !!hop && !isPlus && hop > FREE_HOP_LIMIT && mode === 'normal';
   const openPaywall = () => router.push('/upgrade' as Href);
 
   const handleContactRequest = () => {
@@ -179,41 +177,20 @@ export default function ProfileScreen() {
 
             <View style={styles.bioSection}>
               <Text style={styles.bioLabel}>나를 소개합니다</Text>
-              {showPlusGate ? (
-                <View style={styles.bioMaskWrap}>
-                  {[0.95, 0.8, 0.6].map((w, i) => (
-                    <View key={i} style={[styles.maskLine, { width: `${w * 100}%` }]} />
-                  ))}
-                </View>
-              ) : (
-                <Text style={[typography.body, { color: colors.text, marginTop: 10 }]}>
-                  {profile.introText}
-                </Text>
-              )}
+              <Text style={[typography.body, { color: colors.text, marginTop: 10 }]}>
+                {profile.introText}
+              </Text>
             </View>
 
-            {showPlusGate && (
+            {requestGated && (
               <View style={styles.gateWrap}>
-                <GradientBox
-                  vertical
-                  colorsRange={[colors.plus.accentSoft, '#FFFFFF']}
-                  borderRadius={radius.lg}
-                  style={styles.gateBox}
-                >
-                  <PlusBadge variant="solid" size="sm" style={{ marginBottom: 10 }} />
-                  <Text style={styles.gateTitle}>{hop}촌 소개글은 Dash+ 전용이에요</Text>
-                  <Text style={styles.gateDesc}>
-                    업그레이드하면 소개글 전체를 보고{'\n'}바로 연락 요청까지 보낼 수 있어요.
+                <View style={styles.gateBox}>
+                  <Crown size={16} color={colors.plus.accent} fill={colors.plus.accent} />
+                  <Text style={styles.gateText}>
+                    <Text style={styles.gateTextStrong}>{hop}촌 연락 요청은 Dash+ 전용</Text>이에요.{'\n'}
+                    소개글 열람은 무료 — 연락 요청만 Dash+로 보낼 수 있어요.
                   </Text>
-                  <DashButton
-                    title="Dash+ 시작하기"
-                    variant="primary"
-                    size="md"
-                    onPress={openPaywall}
-                    leading={<Crown size={14} color="#fff" fill="#fff" />}
-                    style={{ backgroundColor: colors.plus.accent, minWidth: 160 }}
-                  />
-                </GradientBox>
+                </View>
               </View>
             )}
           </ScrollView>
@@ -256,7 +233,7 @@ export default function ProfileScreen() {
                 disabled
                 leading={<Check size={16} color={colors.textMuted} />}
               />
-            ) : showPlusGate ? (
+            ) : requestGated ? (
               <DashButton
                 title="Dash+로 연락 요청"
                 variant="primary"
@@ -300,32 +277,18 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14 },
-  bioMaskWrap: { marginTop: 12, gap: 9 },
-  maskLine: { height: 11, borderRadius: 6, backgroundColor: '#EAE6F2' },
   gateWrap: { paddingHorizontal: spacing.xxl, paddingBottom: spacing.xxl },
   gateBox: {
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    borderWidth: 1,
-    borderColor: colors.plus.accentSoft,
-    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'flex-start',
+    backgroundColor: colors.plus.accentSoft,
+    borderRadius: radius.lg,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
   },
-  gateTitle: {
-    fontFamily,
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.text,
-    letterSpacing: -0.3,
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  gateDesc: {
-    ...typography.hint,
-    color: colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 18,
-    marginBottom: 14,
-  },
+  gateText: { ...typography.hint, color: colors.text, flex: 1, lineHeight: 18 },
+  gateTextStrong: { color: colors.plus.accent, fontWeight: '700' },
   acceptedCard: {
     marginTop: spacing.xl,
     width: '100%',

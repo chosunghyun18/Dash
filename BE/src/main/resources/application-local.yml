@@ -14,7 +14,8 @@ spring:
         format_sql: true
   flyway:
     enabled: true
-    locations: classpath:db/migration
+    # local 전용: 스키마(db/migration) + dev 시드(db/seed). 운영 프로파일엔 db/seed 미포함.
+    locations: classpath:db/migration,classpath:db/seed
 
 server:
   port: 8080

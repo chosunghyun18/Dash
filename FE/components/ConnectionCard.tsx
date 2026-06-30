@@ -1,21 +1,18 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Lock, Users, ChevronRight } from 'lucide-react-native';
+import { Users, ChevronRight } from 'lucide-react-native';
 import { Avatar } from './Avatar';
 import { DashButton } from './DashButton';
-import { PlusBadge } from './PlusBadge';
 import { colors, radius, spacing, typography } from '../theme';
 import type { Acquaintance } from '../types';
 
 interface Props {
   person: Acquaintance;
   onIntro: () => void;
-  /** 더 깊은 지인 목록으로 드릴다운 (지인이 있을 때만) */
+  /** 더 깊은 지인 목록으로 드릴다운 (지인이 있을 때만). 탐색은 전 촌수 무료. */
   onDrill?: () => void;
-  /** 다음 촌수가 무료 회원에게 잠겨 있는지 */
-  nextLocked?: boolean;
 }
 
-export function ConnectionCard({ person, onIntro, onDrill, nextLocked = false }: Props) {
+export function ConnectionCard({ person, onIntro, onDrill }: Props) {
   const bio = person.bio ?? '';
   const preview = bio.length > 22 ? bio.slice(0, 22) + '…' : bio;
   const count = person.acquaintanceCount ?? 0;
@@ -34,39 +31,20 @@ export function ConnectionCard({ person, onIntro, onDrill, nextLocked = false }:
             </Text>
           ) : null}
         </View>
-        <DashButton
-          title="소개 보기"
-          variant="primary"
-          size="sm"
-          onPress={onIntro}
-          leading={<Lock size={12} color="#fff" />}
-        />
+        <DashButton title="소개 보기" variant="primary" size="sm" onPress={onIntro} />
       </View>
 
       {count > 0 && (
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={onDrill}
-          style={[
-            styles.drillRow,
-            { backgroundColor: nextLocked ? colors.plus.accentSoft : colors.bgSoft },
-          ]}
+          style={[styles.drillRow, { backgroundColor: colors.bgSoft }]}
         >
-          <Users size={14} color={nextLocked ? colors.plus.accent : colors.textMuted} />
-          <Text
-            style={[
-              styles.drillText,
-              { color: nextLocked ? colors.plus.accent : colors.textMuted },
-            ]}
-            numberOfLines={1}
-          >
+          <Users size={14} color={colors.textMuted} />
+          <Text style={[styles.drillText, { color: colors.textMuted }]} numberOfLines={1}>
             {person.nickname}님의 지인 {count}명 더 보기
           </Text>
-          {nextLocked ? (
-            <PlusBadge variant="solid" size="xs" style={{ marginLeft: 'auto' }} />
-          ) : (
-            <ChevronRight size={14} color={colors.textFaint} style={{ marginLeft: 'auto' }} />
-          )}
+          <ChevronRight size={14} color={colors.textFaint} style={{ marginLeft: 'auto' }} />
         </TouchableOpacity>
       )}
     </View>
