@@ -69,10 +69,11 @@ export function useReceivedRequests() {
   });
 }
 
-export function useMyProfile() {
+export function useMyProfile(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['my-profile'],
     queryFn: friendService.getMyProfile,
+    enabled: options?.enabled ?? true,
   });
 }
 
