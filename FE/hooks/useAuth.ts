@@ -15,6 +15,7 @@ export function useSocialLogin() {
   const router = useRouter();
   const startAuthenticating = useAuthStore((s) => s.startAuthenticating);
   const setSession = useAuthStore((s) => s.setSession);
+  const setPendingRegistration = useAuthStore((s) => s.setPendingRegistration);
   const cancelAuthenticating = useAuthStore((s) => s.cancelAuthenticating);
 
   const [loadingProvider, setLoadingProvider] = useState<AuthProvider | null>(null);
@@ -27,13 +28,21 @@ export function useSocialLogin() {
       setLoadingProvider(provider);
       startAuthenticating(provider);
       const res = await login();
+      if (res.isNewUser) {
+        // 등록 토큰 방식: isNewUser=true 면 accessToken 자리에 담긴 것은 단기 registration
+        // 토큰이므로 일반 세션으로 저장하면 안 된다. 별도 보관 후 프로필 첫 설정으로 이동.
+        // TODO: profile/edit 첫 설정에서 authService.register 호출 + gender 입력
+        setPendingRegistration({ token: res.accessToken, provider });
+        router.replace('/profile/edit');
+        return true;
+      }
       setSession({
         accessToken: res.accessToken,
         refreshToken: res.refreshToken,
         userId: res.userId,
         provider,
       });
-      router.replace(res.isNewUser ? '/profile/edit' : '/(tabs)');
+      router.replace('/(tabs)');
       return true;
     } catch {
       cancelAuthenticating();

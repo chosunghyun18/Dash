@@ -8,6 +8,9 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum ErrorCode {
 
+    // Auth
+    INVALID_SOCIAL_TOKEN(HttpStatus.BAD_REQUEST, "유효하지 않은 소셜 토큰입니다"),
+
     // Member
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "회원을 찾을 수 없습니다"),
 

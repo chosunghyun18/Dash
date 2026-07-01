@@ -28,7 +28,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String token = extractToken(request);
 
-        if (token != null && jwtProvider.isValid(token)) {
+        // access 토큰만 인증한다. registration 토큰은 subject 가 "apple:xxx" 형태라
+        // extractMemberId(Long 파싱)가 터지므로 type claim 으로 먼저 거른다.
+        // refresh/registration 토큰으로 보호 API 접근 시 익명 → 401.
+        if (token != null && jwtProvider.isValid(token)
+                && JwtProvider.TYPE_ACCESS.equals(jwtProvider.extractType(token))) {
             Long memberId = jwtProvider.extractMemberId(token);
             UserDetails userDetails = userDetailsService.loadUserById(memberId);
             UsernamePasswordAuthenticationToken auth =
