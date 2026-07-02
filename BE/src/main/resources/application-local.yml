@@ -16,6 +16,9 @@ spring:
     enabled: true
     # local 전용: 스키마(db/migration) + dev 시드(db/seed). 운영 프로파일엔 db/seed 미포함.
     locations: classpath:db/migration,classpath:db/seed
+    # 시드를 V900 으로 고정하는 스킴상 이후 추가되는 실제 마이그레이션(V4+)은 항상 900 보다
+    # 낮은 out-of-order 가 되므로 local 에서만 허용한다(운영 프로파일엔 db/seed 없음).
+    out-of-order: true
 
 server:
   port: 8080
