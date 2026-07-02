@@ -14,6 +14,8 @@ import {
 import { Stack, useRouter } from 'expo-router';
 import { Phone, Mail, Check, X } from 'lucide-react-native';
 import { useMyProfile, useUpdateMyProfile, useCheckNickname } from '../../hooks/useFriends';
+import { authService } from '../../services/auth';
+import { useAuthStore } from '../../stores/authStore';
 import { DashButton } from '../../components/DashButton';
 import { ScreenLoader } from '../../components/ScreenLoader';
 import { colors, radius, spacing, typography } from '../../theme';
@@ -22,7 +24,13 @@ type ContactType = 'phone' | 'email';
 
 export default function ProfileEditScreen() {
   const router = useRouter();
-  const { data: myProfile, isLoading: isProfileLoading } = useMyProfile();
+  const pendingRegistration = useAuthStore((s) => s.pendingRegistration);
+  const setSession = useAuthStore((s) => s.setSession);
+  const registrationMode = !!pendingRegistration;
+
+  const { data: myProfile, isLoading: isProfileLoading } = useMyProfile({
+    enabled: !registrationMode,
+  });
 
   const [nickname, setNickname] = useState('');
   const [contactType, setContactType] = useState<ContactType>('phone');
@@ -31,9 +39,11 @@ export default function ProfileEditScreen() {
   const [nicknameChecked, setNicknameChecked] = useState<boolean | null>(null);
   const [lastCheckedNickname, setLastCheckedNickname] = useState('');
   const [initialized, setInitialized] = useState(false);
+  const [gender, setGender] = useState<'MALE' | 'FEMALE' | null>(null);
+  const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
-    if (myProfile && !initialized) {
+    if (myProfile && !registrationMode && !initialized) {
       setNickname(myProfile.nickname);
       if (myProfile.email) {
         setContactType('email');
@@ -47,7 +57,7 @@ export default function ProfileEditScreen() {
       setNicknameChecked(true);
       setInitialized(true);
     }
-  }, [myProfile, initialized]);
+  }, [myProfile, registrationMode, initialized]);
 
   const { mutate: updateProfile, isPending: isSaving } = useUpdateMyProfile();
   const { mutate: checkNickname, isPending: isChecking } = useCheckNickname();
@@ -71,7 +81,61 @@ export default function ProfileEditScreen() {
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (registrationMode) {
+      if (!nickname.trim()) {
+        Alert.alert('알림', '닉네임을 입력해주세요.');
+        return;
+      }
+      if (!gender) {
+        Alert.alert('알림', '성별을 선택해주세요.');
+        return;
+      }
+      if (!introText.trim()) {
+        Alert.alert('알림', '소개글을 입력해주세요.');
+        return;
+      }
+      setIsRegistering(true);
+      try {
+        const res = await authService.register(pendingRegistration!.token, {
+          nickname: nickname.trim(),
+          gender,
+          phone: contactType === 'phone' && contact.trim() ? contact.trim() : undefined,
+          email: contactType === 'email' && contact.trim() ? contact.trim() : undefined,
+          introText: introText.trim(),
+        });
+        setSession({
+          accessToken: res.accessToken,
+          refreshToken: res.refreshToken,
+          userId: res.userId,
+          provider: pendingRegistration!.provider,
+        });
+        router.replace('/(tabs)');
+      } catch (e: any) {
+        const status = e?.response?.status;
+        if (status === 409) {
+          setNicknameChecked(false);
+          Alert.alert('알림', '이미 사용 중인 닉네임이에요.');
+        } else if (status === 400) {
+          // 등록 토큰 만료/무효 → 로그인부터 다시
+          Alert.alert('세션 만료', '다시 로그인해주세요.', [
+            {
+              text: '확인',
+              onPress: () => {
+                useAuthStore.getState().cancelAuthenticating();
+                router.replace('/login');
+              },
+            },
+          ]);
+        } else {
+          Alert.alert('오류', '등록에 실패했어요. 다시 시도해주세요.');
+        }
+      } finally {
+        setIsRegistering(false);
+      }
+      return;
+    }
+
     if (!nickname.trim()) {
       Alert.alert('알림', '닉네임을 입력해주세요.');
       return;
@@ -106,7 +170,7 @@ export default function ProfileEditScreen() {
     });
   };
 
-  if (isProfileLoading) {
+  if (!registrationMode && isProfileLoading) {
     return <ScreenLoader />;
   }
 
@@ -117,15 +181,15 @@ export default function ProfileEditScreen() {
       <Stack.Screen
         options={{
           headerShown: true,
-          headerTitle: '프로필 수정',
+          headerTitle: registrationMode ? '첫 프로필 만들기' : '프로필 수정',
           headerBackTitle: '',
           headerTintColor: colors.text,
           headerShadowVisible: false,
           headerStyle: { backgroundColor: colors.bg },
           headerTitleStyle: { fontSize: 16, fontWeight: '700' },
           headerRight: () => (
-            <TouchableOpacity onPress={handleSave} disabled={isSaving}>
-              {isSaving ? (
+            <TouchableOpacity onPress={handleSave} disabled={isSaving || isRegistering}>
+              {isSaving || isRegistering ? (
                 <ActivityIndicator color={colors.primary} size="small" />
               ) : (
                 <Text style={[typography.listItemName, { color: colors.primary }]}>저장</Text>
@@ -139,6 +203,26 @@ export default function ProfileEditScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+          {/* 성별 — 등록 모드에서만 */}
+          {registrationMode && (
+            <View style={styles.field}>
+              <Text style={styles.label}>성별 <Text style={{ color: colors.primary }}>*</Text></Text>
+              <View style={styles.toggleRow}>
+                <GenderToggle
+                  label="남성"
+                  active={gender === 'MALE'}
+                  onPress={() => setGender('MALE')}
+                />
+                <GenderToggle
+                  label="여성"
+                  active={gender === 'FEMALE'}
+                  onPress={() => setGender('FEMALE')}
+                />
+              </View>
+              <Text style={styles.hint}>가입 후 변경할 수 없어요</Text>
+            </View>
+          )}
+
           {/* 닉네임 */}
           <View style={styles.field}>
             <Text style={styles.label}>닉네임 <Text style={{ color: colors.primary }}>*</Text></Text>
@@ -152,13 +236,15 @@ export default function ProfileEditScreen() {
                 maxLength={12}
                 returnKeyType="done"
               />
-              <DashButton
-                title="중복 확인"
-                variant="outline"
-                size="md"
-                onPress={handleCheckNickname}
-                loading={isChecking}
-              />
+              {!registrationMode && (
+                <DashButton
+                  title="중복 확인"
+                  variant="outline"
+                  size="md"
+                  onPress={handleCheckNickname}
+                  loading={isChecking}
+                />
+              )}
             </View>
             {nicknameChecked === true && (
               <View style={styles.feedbackRow}>
@@ -260,6 +346,34 @@ function ContactToggle({
     >
       <Ico size={16} color={fg} />
       <Text style={[typography.buttonMd, { color: fg }]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function GenderToggle({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={onPress}
+      style={[
+        styles.toggle,
+        {
+          backgroundColor: active ? colors.primarySoft : colors.bg,
+          borderColor: active ? colors.primary : colors.border,
+        },
+      ]}
+    >
+      <Text style={[typography.buttonMd, { color: active ? colors.primary : colors.textMuted }]}>
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 }

@@ -18,7 +18,7 @@ import java.util.List;
 
 @Tag(name = "Invitation", description = "친구 초대 API")
 @RestController
-@RequestMapping("/api/v1/invitations")
+@RequestMapping("/api/invitations")
 @RequiredArgsConstructor
 public class InvitationController {
 
