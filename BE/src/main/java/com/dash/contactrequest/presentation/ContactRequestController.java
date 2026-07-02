@@ -19,7 +19,7 @@ import java.util.List;
 
 @Tag(name = "ContactRequest", description = "연락 요청 API")
 @RestController
-@RequestMapping("/api/v1/contact-requests")
+@RequestMapping("/api/contact-requests")
 @RequiredArgsConstructor
 public class ContactRequestController {
 

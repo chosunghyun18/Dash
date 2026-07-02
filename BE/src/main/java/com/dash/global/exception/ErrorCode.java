@@ -32,7 +32,10 @@ public enum ErrorCode {
     CONTACT_REQUEST_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 연락 요청을 보냈습니다"),
     CONTACT_REQUEST_NOT_PENDING(HttpStatus.CONFLICT, "이미 처리된 연락 요청입니다"),
     CONTACT_REQUEST_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 연락 요청에 대한 권한이 없습니다"),
-    CANNOT_REQUEST_SELF(HttpStatus.BAD_REQUEST, "자기 자신에게 연락 요청할 수 없습니다");
+    CANNOT_REQUEST_SELF(HttpStatus.BAD_REQUEST, "자기 자신에게 연락 요청할 수 없습니다"),
+
+    // API
+    UNSUPPORTED_API_VERSION(HttpStatus.BAD_REQUEST, "지원하지 않는 API 버전입니다");
 
     private final HttpStatus status;
     private final String message;

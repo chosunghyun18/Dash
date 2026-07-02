@@ -27,12 +27,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 /**
  * 소셜 인증 API — Apple/Google 로그인, 신규 회원 등록, 로그아웃.
- * 경로 {@code /api/v1/auth/**} 는 SecurityConfig 에서 permitAll.
+ * 경로 {@code /api/auth/**} 는 SecurityConfig 에서 permitAll.
  * (개발 전용 {@code /dev} 는 {@link DevAuthController} — local 프로파일 한정, 경로 충돌 없음.)
  */
 @Tag(name = "Auth", description = "소셜 인증 API")
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 

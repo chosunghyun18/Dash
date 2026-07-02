@@ -18,10 +18,10 @@ import org.springframework.web.server.ResponseStatusException;
  *
  * <p>{@code @Profile("local")} 이므로 운영(prod)·docker·dev 프로파일엔 빈으로 등록되지 않는다.
  * 시드 데이터(`db/seed`, 기본 수지 id=1)가 존재하는 local 환경에서만 의미가 있다.
- * 경로 {@code /api/v1/auth/**} 는 SecurityConfig 에서 permitAll.
+ * 경로 {@code /api/auth/**} 는 SecurityConfig 에서 permitAll.
  */
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Profile("local")
 public class DevAuthController {

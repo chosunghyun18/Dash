@@ -30,14 +30,14 @@ export interface InvitationSummary {
 
 export const invitationService = {
   create: () =>
-    api.post<InvitationCreateResponse>('/api/v1/invitations').then((r) => r.data),
+    api.post<InvitationCreateResponse>('/api/invitations').then((r) => r.data),
 
   validate: (token: string) =>
-    api.get<InvitationValidateResponse>(`/api/v1/invitations/validate/${token}`).then((r) => r.data),
+    api.get<InvitationValidateResponse>(`/api/invitations/validate/${token}`).then((r) => r.data),
 
   accept: (token: string) =>
-    api.post<InvitationAcceptResponse>(`/api/v1/invitations/${token}/accept`).then((r) => r.data),
+    api.post<InvitationAcceptResponse>(`/api/invitations/${token}/accept`).then((r) => r.data),
 
   getMyInvitations: () =>
-    api.get<InvitationSummary[]>('/api/v1/invitations/mine').then((r) => r.data),
+    api.get<InvitationSummary[]>('/api/invitations/mine').then((r) => r.data),
 };
