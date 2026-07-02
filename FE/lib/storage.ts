@@ -43,4 +43,6 @@ export const STORAGE_KEYS = {
   refreshToken: 'auth.refreshToken',
   provider: 'auth.provider',
   userId: 'auth.userId',
+  /** SOFT_UPDATE 배너 마지막 노출 날짜(yyyy-mm-dd) — 1일 1회 노출 제어 */
+  softUpdateShownDate: 'appConfig.softUpdateShownDate',
 } as const;
