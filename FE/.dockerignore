@@ -1,0 +1,51 @@
+# FE .dockerignore
+# Keep the Docker build context small and prevent host-built (macOS/darwin-arm64)
+# artifacts from clobbering what `npm ci` installs inside the linux image.
+
+# Dependencies (must be installed fresh via `npm ci` in the image)
+node_modules
+
+# Native mobile projects (not needed for the Expo dev server image)
+ios
+android
+
+# Expo local caches / generated state
+.expo
+.expo-shared
+expo-env.d.ts
+
+# Web / build outputs and caches
+dist
+web-build
+.cache
+.metro-cache
+*.tsbuildinfo
+coverage
+
+# Version control
+.git
+.gitignore
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / editor cruft
+.DS_Store
+.idea
+.vscode
+
+# Environment files (secrets) — keep the checked-in template
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+
+# NOTE: package.json and package-lock.json are intentionally NOT ignored —
+# `npm ci` in the Dockerfile needs them.

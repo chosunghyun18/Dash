@@ -62,5 +62,19 @@ target 'Dash' do
         end
       end
     end
+
+    # Xcode 16+/26 clang 은 consteval 을 엄격히 강제해 React Native 의존 fmt 의 FMT_STRING
+    # (basic_format_string consteval 생성자) 컴파일이 error 65 로 실패한다.
+    # fmt base.h 에서 FMT_USE_CONSTEVAL 을 0 으로 고정해 consteval 을 비활성화한다(fmt 공식 지원 구성).
+    # pod install 마다 재적용되도록 헤더를 직접 패치한다.
+    fmt_base = File.join(__dir__, 'Pods', 'fmt', 'include', 'fmt', 'base.h')
+    if File.exist?(fmt_base)
+      original = File.read(fmt_base)
+      patched = original.gsub("#  define FMT_USE_CONSTEVAL 1", "#  define FMT_USE_CONSTEVAL 0")
+      if original != patched
+        File.write(fmt_base, patched)
+        Pod::UI.puts "[dash] Patched fmt/base.h: FMT_USE_CONSTEVAL=0 (Xcode consteval 회피)"
+      end
+    end
   end
 end

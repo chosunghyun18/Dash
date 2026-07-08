@@ -31,7 +31,6 @@ export function useSocialLogin() {
       if (res.isNewUser) {
         // 등록 토큰 방식: isNewUser=true 면 accessToken 자리에 담긴 것은 단기 registration
         // 토큰이므로 일반 세션으로 저장하면 안 된다. 별도 보관 후 프로필 첫 설정으로 이동.
-        // TODO: profile/edit 첫 설정에서 authService.register 호출 + gender 입력
         setPendingRegistration({ token: res.accessToken, provider });
         router.replace('/profile/edit');
         return true;
@@ -55,7 +54,7 @@ export function useSocialLogin() {
   /**
    * 개발 환경 전용 로그인.
    *
-   * BE(local 프로파일)의 `/api/v1/auth/dev` 를 호출해 시드 멤버(기본 수지 id=1)로
+   * BE(local 프로파일)의 `/api/auth/dev` 를 호출해 시드 멤버(기본 수지 id=1)로
    * 정식 JWT를 발급받아 세션에 저장한다. 이후 보호 API가 인증되어 시드 데이터가 보인다.
    * `__DEV__` 빌드에서만 버튼이 렌더되며, 운영 번들엔 BE 엔드포인트도 존재하지 않는다.
    */

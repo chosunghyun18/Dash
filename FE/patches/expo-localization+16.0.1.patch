@@ -1,0 +1,47 @@
+diff --git a/node_modules/expo-localization/android/.gradle/9.2.0/checksums/checksums.lock b/node_modules/expo-localization/android/.gradle/9.2.0/checksums/checksums.lock
+new file mode 100644
+index 0000000..e733020
+Binary files /dev/null and b/node_modules/expo-localization/android/.gradle/9.2.0/checksums/checksums.lock differ
+diff --git a/node_modules/expo-localization/android/.gradle/9.2.0/fileChanges/last-build.bin b/node_modules/expo-localization/android/.gradle/9.2.0/fileChanges/last-build.bin
+new file mode 100644
+index 0000000..f76dd23
+Binary files /dev/null and b/node_modules/expo-localization/android/.gradle/9.2.0/fileChanges/last-build.bin differ
+diff --git a/node_modules/expo-localization/android/.gradle/9.2.0/fileHashes/fileHashes.bin b/node_modules/expo-localization/android/.gradle/9.2.0/fileHashes/fileHashes.bin
+new file mode 100644
+index 0000000..7c25185
+Binary files /dev/null and b/node_modules/expo-localization/android/.gradle/9.2.0/fileHashes/fileHashes.bin differ
+diff --git a/node_modules/expo-localization/android/.gradle/9.2.0/fileHashes/fileHashes.lock b/node_modules/expo-localization/android/.gradle/9.2.0/fileHashes/fileHashes.lock
+new file mode 100644
+index 0000000..b4d45db
+Binary files /dev/null and b/node_modules/expo-localization/android/.gradle/9.2.0/fileHashes/fileHashes.lock differ
+diff --git a/node_modules/expo-localization/android/.gradle/9.2.0/gc.properties b/node_modules/expo-localization/android/.gradle/9.2.0/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/expo-localization/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock b/node_modules/expo-localization/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock
+new file mode 100644
+index 0000000..08a9b5d
+Binary files /dev/null and b/node_modules/expo-localization/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock differ
+diff --git a/node_modules/expo-localization/android/.gradle/buildOutputCleanup/cache.properties b/node_modules/expo-localization/android/.gradle/buildOutputCleanup/cache.properties
+new file mode 100644
+index 0000000..2119089
+--- /dev/null
++++ b/node_modules/expo-localization/android/.gradle/buildOutputCleanup/cache.properties
+@@ -0,0 +1,2 @@
++#Wed Jul 08 12:55:45 KST 2026
++gradle.version=9.2.0
+diff --git a/node_modules/expo-localization/android/.gradle/vcs-1/gc.properties b/node_modules/expo-localization/android/.gradle/vcs-1/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/expo-localization/ios/LocalizationModule.swift b/node_modules/expo-localization/ios/LocalizationModule.swift
+index 73b2b9d..ab98d69 100644
+--- a/node_modules/expo-localization/ios/LocalizationModule.swift
++++ b/node_modules/expo-localization/ios/LocalizationModule.swift
+@@ -123,6 +123,8 @@ public class LocalizationModule: Module {
+       return "roc"
+     case .iso8601:
+       return "iso8601"
++    @unknown default:
++      return "gregory"
+     }
+   }
+ 

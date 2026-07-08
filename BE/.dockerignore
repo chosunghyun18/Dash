@@ -1,0 +1,30 @@
+# BE .dockerignore
+# Keep the Docker build context small. The Dockerfile builds inside the image
+# via Gradle, so host build outputs and IDE/tooling artifacts are not needed.
+
+# Gradle build outputs and caches
+build
+.gradle
+
+# Compiled / tooling output dirs
+bin
+out
+
+# IDE / editor cruft
+.idea
+*.iml
+.vscode
+
+# Version control
+.git
+.gitignore
+
+# OS cruft
+.DS_Store
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+
+# NOTE: gradlew, gradle/, build.gradle and src are intentionally NOT ignored —
+# the Dockerfile copies them to build the bootJar.
