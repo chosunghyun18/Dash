@@ -1,0 +1,30 @@
+{
+  "name": "dash-admin-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Dash 관리자 웹 대시보드 (React + TypeScript + Vite + Ant Design)",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5.5.2",
+    "@tanstack/react-query": "^5.62.0",
+    "antd": "^5.22.5",
+    "axios": "^1.7.9",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}

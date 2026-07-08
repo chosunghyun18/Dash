@@ -3,6 +3,7 @@ package com.dash.global.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -25,8 +26,35 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final AdminJwtAuthFilter adminJwtAuthFilter;
 
+    /**
+     * 관리자 전용 필터체인 — {@code /api/admin/**} 만 매칭. admin_access 토큰만 인증하는
+     * {@link AdminJwtAuthFilter} 를 사용하므로 앱 access 토큰으로는 admin API 에 접근할 수 없다.
+     * 로그인/토큰갱신은 permitAll, 그 외 admin 엔드포인트는 ROLE_ADMIN 필요.
+     */
     @Bean
+    @Order(1)
+    public SecurityFilterChain adminFilterChain(HttpSecurity http) throws Exception {
+        return http
+            .securityMatcher("/api/admin/**")
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/admin/auth/login", "/api/admin/auth/refresh").permitAll()
+                .anyRequest().hasRole("ADMIN")
+            )
+            .addFilterBefore(adminJwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .build();
+    }
+
+    /**
+     * 앱(회원) 기본 필터체인 — admin 체인이 매칭하지 않은 나머지 모든 요청.
+     * {@link JwtAuthFilter} 는 type=access(회원) 토큰만 인증하므로 admin 토큰으로는 회원 API 접근 불가.
+     */
+    @Bean
+    @Order(2)
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
             .csrf(AbstractHttpConfigurer::disable)

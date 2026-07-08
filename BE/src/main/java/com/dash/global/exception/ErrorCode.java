@@ -35,7 +35,11 @@ public enum ErrorCode {
     CANNOT_REQUEST_SELF(HttpStatus.BAD_REQUEST, "자기 자신에게 연락 요청할 수 없습니다"),
 
     // API
-    UNSUPPORTED_API_VERSION(HttpStatus.BAD_REQUEST, "지원하지 않는 API 버전입니다");
+    UNSUPPORTED_API_VERSION(HttpStatus.BAD_REQUEST, "지원하지 않는 API 버전입니다"),
+
+    // Admin
+    INVALID_ADMIN_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다"),
+    INVALID_ADMIN_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 관리자 토큰입니다");
 
     private final HttpStatus status;
     private final String message;
